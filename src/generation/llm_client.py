@@ -30,8 +30,8 @@ class UnifiedAIClient:
         if settings.api_version == "v1" or "/v1" in endpoint:
             base_url = endpoint.rstrip('/')
             if not base_url.endswith("/openai/v1") and not base_url.endswith("/v1"):
-                # If it's a foundry project URL and lacks v1, append standard Foundry v1 path
-                base_url += "/openai/v1" if "projects" in base_url else "/v1"
+                # Always append /openai/v1 for standard API gateways, whether Hub or Project level
+                base_url += "/openai/v1"
                 
             return AsyncOpenAI(
                 api_key=api_key,
