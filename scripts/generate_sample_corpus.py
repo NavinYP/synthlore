@@ -6,6 +6,7 @@ import asyncio
 import base64
 import docx
 import time
+from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.graph.config import WorldConfig
@@ -22,18 +23,30 @@ async def generate_corpus(num_docs=10):
     
     pipeline_start = time.time()
     
-    # Setup Directories
+    # Setup Directories (Timestamped)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    corpus_dir = os.path.join(base_dir, "output", "sample_corpus")
+    corpus_dir = os.path.join(base_dir, "output", f"sample_corpus_{timestamp}")
     os.makedirs(corpus_dir, exist_ok=True)
     
-    # 1. Phase 1: Graph Generation
-    print("\n[Phase 1] Initializing WorldConfig and generating graph...")
+    print(f"\n[Phase 1] Initializing WorldConfig and generating graph...")
     t0 = time.time()
     config = WorldConfig.default_arcane_industrial()
     generator = KnowledgeGraphGenerator(config)
     G = generator.generate(num_nodes=30)
     graph_time = time.time() - t0
+    
+    # Use dynamic distribution rules
+    dist = config.corpus_distribution
+    num_with_image = int(num_docs * dist.image_injection_ratio)
+    
+    formats = []
+    for ext, ratio in dist.format_ratios.items():
+        formats.extend([ext] * int(num_docs * ratio))
+    # Fill any rounding remainders with the first format
+    while len(formats) < num_docs:
+        formats.append(list(dist.format_ratios.keys())[0])
+    random.shuffle(formats)
     
     graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
     import networkx as nx
@@ -48,7 +61,10 @@ async def generate_corpus(num_docs=10):
     renderer = VisualRenderer()
     
     target_nodes = list(G.nodes)[:num_docs]
-    export_formats = [".png", ".pdf", ".docx", ".txt"]
+    
+    # Decide which non-txt nodes get an image to hit exact count
+    valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
+    image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
     
     print(f"\n[Phase 2 & 3] Compiling and Rendering {num_docs} Documents...")
     
@@ -57,11 +73,11 @@ async def generate_corpus(num_docs=10):
     for i, node_id in enumerate(target_nodes):
         node_name = G.nodes[node_id]['name']
         doc_type = random.choice(list(renderer.profiles.keys()))
-        ext = random.choice(export_formats)
+        ext = formats[i]
         
         print(f"   [{i+1}/{num_docs}] Processing {node_name} as [{doc_type}] -> {ext}")
         
-        # Generate Markdown Text (Phase 2)
+        # Generate Markdown Text
         t0 = time.time()
         text = await compiler.compile_document(G, node_id, doc_type=doc_type)
         t_text = time.time() - t0
@@ -73,9 +89,9 @@ async def generate_corpus(num_docs=10):
         with open(os.path.join(corpus_dir, f"{node_name}_CONTEXT.txt"), "w") as f:
             f.write(compiler.extract_subgraph_context(G, node_id))
             
-        # Image Asset Generation (~35% chance)
+        # Image Asset Generation (Guaranteed Distribution)
         embedded_img_path = None
-        if random.random() < 0.35 and ext != ".txt":
+        if i in image_indices:
             print(f"      🖌️ Generating visual asset for {node_name}...")
             t0 = time.time()
             try:
@@ -96,10 +112,10 @@ async def generate_corpus(num_docs=10):
             except Exception as e:
                 print(f"      ❌ Image generation failed: {e}")
                 
-        # Render Document (Phase 3)
+        # Render Document
         out_path = os.path.join(corpus_dir, f"{node_name}{ext}")
-        
         t0 = time.time()
+        
         if ext in [".png", ".pdf"]:
             renderer.render_document(text, doc_type, out_path, embedded_image_path=embedded_img_path)
         elif ext == ".docx":
@@ -127,13 +143,14 @@ async def generate_corpus(num_docs=10):
     print("\n" + "="*60)
     print("📊 PIPELINE METRICS & ETA CALCULATIONS")
     print("="*60)
+    print(f"Output Directory: {corpus_dir}")
     print(f"Total Pipeline Execution Time: {total_time:.2f}s")
     print(f"Average Graph Generation:      {graph_time:.2f}s (Static)")
     print(f"Average Text Gen (gpt-5.6-luna):  {avg_txt:.2f}s per doc")
     print(f"Average Image Gen (gpt-image-2): {avg_img:.2f}s per image")
     print(f"Average Rendering Time:        {avg_render:.2f}s per doc")
     print("="*60)
-    print(f"🎉 CORPUS COMPLETE! Generated {num_docs} documents in: {corpus_dir}")
+    print(f"🎉 CORPUS COMPLETE! Generated {num_docs} documents.")
 
 if __name__ == "__main__":
     asyncio.run(generate_corpus(10))
