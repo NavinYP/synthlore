@@ -141,6 +141,7 @@ class KnowledgeGraphGenerator:
         banks = {
             "name_person": ["Silas", "Elara", "Kaelen", "Nyx", "Orion", "Jax", "Vex", "Cipher", "Thorne", "Valeria", "Darius", "Lysander", "Seraphina", "Rook", "Ghost"],
             "name_facility": ["Core-A", "Station-9", "Void-Hub", "Iron-Spire", "Nexus-Prime", "The Crucible", "Blacksite Omega", "Echo-Base", "Sector 7G"],
+            "name_crisis": ["The Brass Blight", "The Cinder Mutiny", "The Great Schism", "The Void-Collapse", "The Silence of Sector 4", "The Blood-Tithe Rebellion"],
             "region": ["The Undercity", "Sector 4", "Outer Rim", "The Spire", "Sub-level 9", "The Wastes", "Neo-District", "Abyss-Trench", "The High Halls"],
             "role": ["Enforcer", "Smuggler", "Alchemist", "Netrunner", "Engineer", "Arch-Duke", "Overseer", "Scrapper", "Inquisitor", "Fixer"],
             "specialty": ["Void-tech", "Bio-engineering", "Dark Magic", "Cybernetics", "Contraband", "Heavy Artillery", "Espionage", "Quantum Cryptography"],
@@ -148,12 +149,16 @@ class KnowledgeGraphGenerator:
             "secret": ["Planning a coup", "Embezzling funds", "Working for a rival faction", "Hiding an AI fragment", "Infected with a parasite", "Seeking revenge"],
             "contraband": ["Spice", "Red-Lyrium", "Cyber-stims", "Void-Cores", "Unlicensed Cyberware", "Stolen Blueprints", "Aether-dust"],
             "hazards": ["Toxic Leak", "Radiation", "Warp-Anomaly", "Rogue AI", "Structural Collapse", "Bio-hazard", "Temporal Shift"],
-            "material": ["Adamantine", "Plasteel", "Aether-dust", "Dark-matter", "Promethium", "Synth-blood", "Carbon-nanotubes"]
+            "material": ["Adamantine", "Plasteel", "Aether-dust", "Dark-matter", "Promethium", "Synth-blood", "Carbon-nanotubes"],
+            "outcome": ["Quelled by military force", "Resulted in catastrophic structural failure", "Covered up by the Ministry", "Led to the exile of the instigators", "Still ongoing in the lower sectors"],
+            "secret_truth": ["It was an inside job by the Overseers", "An ancient entity was awakened", "The official casualty count was divided by ten", "The rebellion was funded by a rival Guild"]
         }
         
         if prop == "name":
             if entity_type in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer"]:
                 return random.choice(banks["name_person"]) + f" {random.randint(1,99)}"
+            elif entity_type == "Historical Crisis":
+                return random.choice(banks["name_crisis"])
             else:
                 return random.choice(banks["name_facility"]) + f" {random.randint(100,999)}"
                 
@@ -173,5 +178,11 @@ class KnowledgeGraphGenerator:
             return random.choice(banks["hazards"])
         elif prop == "output_material":
             return random.choice(banks["material"])
+        elif prop == "outcome":
+            return random.choice(banks["outcome"])
+        elif prop == "secret_truth":
+            return random.choice(banks["secret_truth"])
+        elif prop == "casualty_rate":
+            return str(random.randint(500, 50000))
             
         return f"Unknown_{prop}"

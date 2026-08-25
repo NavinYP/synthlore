@@ -24,7 +24,18 @@ TEXT_SEMAPHORE = asyncio.Semaphore(10)
 IMAGE_SEMAPHORE = asyncio.Semaphore(3)
 metrics = {"llm_text": [], "llm_image": [], "render": []}
 
-async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger, theme):
+def setup_logger(corpus_dir):
+    log_file = os.path.join(corpus_dir, "generation.log")
+    logger = logging.getLogger("SynthloreGenerator")
+    logger.setLevel(logging.INFO)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    fh = logging.FileHandler(log_file)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(fh)
+    return logger
+
+async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger, theme, world_prompt):
     node_name = G.nodes[node_id]['name']
     
     # Ensure processed directory exists
@@ -43,7 +54,7 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
     async with TEXT_SEMAPHORE:
         for attempt in range(3):
             try:
-                text = await compiler.compile_document(G, node_id, doc_type=doc_type)
+                text = await compiler.compile_document(G, node_id, doc_type=doc_type, world_prompt=world_prompt)
                 break
             except Exception as e:
                 if "429" in str(e) or "Too Many Requests" in str(e):
@@ -113,9 +124,18 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
                         size="1024x1024"
                     )
                     img_b64 = response.data[0].b64_json
+                    
+                    # Save for embedding
                     embedded_img_path = os.path.join(corpus_dir, f"{node_name}_drawing.png")
                     with open(embedded_img_path, "wb") as fh:
                         fh.write(base64.b64decode(img_b64))
+                        
+                    # Save as a standalone asset in the processed directory for the competitors
+                    asset_suffix = "Chart" if quant_facts else "Blueprint"
+                    standalone_path = os.path.join(processed_dir, f"{node_name}_{asset_suffix}.png")
+                    with open(standalone_path, "wb") as fh:
+                        fh.write(base64.b64decode(img_b64))
+                        
                     break
                 except Exception as e:
                     if "429" in str(e) or "Too Many Requests" in str(e):
@@ -150,7 +170,7 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
     logger.info(f"[{node_name}] Rendered ({ext}): {t_render:.2f}s")
     return node_name
 
-async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane"):
+async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_prompt=None):
     print("="*60)
     print("🏭 SYNTHLORE PIPELINE: GENERATING FRESH SAMPLE CORPUS")
     print("="*60)
@@ -161,7 +181,7 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane"):
     
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    # State Management / Resumption
+    # Check resumption
     if resume_dir:
         corpus_dir = os.path.abspath(resume_dir)
         if not os.path.exists(corpus_dir):
@@ -180,6 +200,8 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane"):
             manifest = json.load(f)
             
         theme = manifest.get("theme", "arcane")
+        world_prompt = manifest.get("world_prompt", world_prompt)
+        
         if theme == "cyberpunk":
             config = WorldConfig.default_cyberpunk_corporate()
         elif theme == "space":
@@ -221,77 +243,78 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane"):
         valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
         image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
         
-        renderer = VisualRenderer()
-        manifest = {"theme": theme} # Store theme in manifest for resumption
+        def generate_dynamic_doc_type(node_data, theme):
+            bases = ["Log", "Report", "Ledger", "Manifest", "Journal", "Diary", "Contract", "Directive", "Notice", "Intercept", "Cache", "Record", "Transcript", "Missive", "Audit", "Blueprint Overview", "Maintenance Schedule", "Grievance", "Requisition Form", "Interrogation Transcript", "Prophecy", "Heretical Pamphlet", "Manifesto", "Smuggled Cipher"]
+            faction = node_data.get("faction")
+            role = node_data.get("role") or node_data.get("manager") or node_data.get("specialty")
+            node_type = node_data.get("type", "")
+            prefixes = []
+            if faction and faction != "UNKNOWN_FACTION": prefixes.append(faction)
+            if role and not role.startswith("Unknown"): prefixes.append(f"{role}'s")
+            if node_type and not node_type.startswith("Unknown") and node_type not in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer"]:
+                prefixes.append(node_type)
+            prefix = random.choice(prefixes) if prefixes else random.choice(["Classified", "Standard", "Priority", "Encrypted"])
+            return f"{prefix} {random.choice(bases)}"
+        
+        manifest = {"theme": theme, "world_prompt": world_prompt} # Store in manifest for resumption
         for i, node_id in enumerate(target_nodes):
             manifest[node_id] = {
                 "ext": formats[i],
-                "doc_type": random.choice(list(renderer.profiles.keys())),
+                "doc_type": generate_dynamic_doc_type(G.nodes[node_id], theme),
                 "needs_image": (i in image_indices)
             }
             
         with open(os.path.join(corpus_dir, "manifest.json"), "w") as f:
             json.dump(manifest, f, indent=2)
-
-    # Setup Logger
-    log_file = os.path.join(corpus_dir, "generation.log")
-    logger = logging.getLogger("SynthloreGenerator")
-    logger.setLevel(logging.INFO)
-    
-    # Remove existing handlers if rerunning in same python process
-    if logger.hasHandlers():
-        logger.handlers.clear()
-        
-    fh = logging.FileHandler(log_file)
-    fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-    logger.addHandler(fh)
-    
+            
+    # Setup LLM and Compiler
     llm_client = UnifiedAIClient()
     await llm_client.initialize()
     compiler = DocumentCompiler(llm_client, config)
+    
+    # Setup Renderer
     renderer = VisualRenderer()
     
-    print(f"\n[Phase 2 & 3] Compiling and Rendering {len(manifest)} Documents Concurrently...")
+    logger = setup_logger(corpus_dir)
+    print(f"\n[Phase 2 & 3] Compiling and Rendering {len(manifest) - 2} Documents Concurrently...")
     
     tasks = []
     for node_id, m_data in manifest.items():
-        if node_id == "theme":
+        if node_id in ["theme", "world_prompt"]:
             continue
         tasks.append(asyncio.create_task(
             process_document(
                 llm_client, compiler, renderer, G, node_id, 
-                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger, theme
+                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger, theme, world_prompt
             )
         ))
         
-    for coro in tqdm.as_completed(tasks, total=len(tasks), desc="Processing Documents", unit="doc"):
+    for coro in tqdm.as_completed(tasks, total=len(tasks), desc="Processing Documents"):
         await coro
-        
-    await llm_client.close()
-    
+
+    # Reporting
     total_time = time.time() - pipeline_start
-    avg_txt = sum(metrics['llm_text'])/len(metrics['llm_text']) if metrics['llm_text'] else 0
-    avg_img = sum(metrics['llm_image'])/len(metrics['llm_image']) if metrics['llm_image'] else 0
-    avg_render = sum(metrics['render'])/len(metrics['render']) if metrics['render'] else 0
-    
-    logger.info(f"Total Pipeline Execution Time: {total_time:.2f}s")
-    
     print("\n" + "="*60)
     print("📊 PARALLEL PIPELINE METRICS")
     print("="*60)
     print(f"Output Directory: {corpus_dir}")
     print(f"Execution Time (This Run): {total_time:.2f}s")
-    if metrics['llm_text']: print(f"Average Text Gen:  {avg_txt:.2f}s")
-    if metrics['llm_image']: print(f"Average Image Gen: {avg_img:.2f}s")
-    if metrics['render']: print(f"Average Rendering: {avg_render:.2f}s")
+    if metrics['llm_text']:
+        print(f"Average Text Gen:  {sum(metrics['llm_text'])/len(metrics['llm_text']):.2f}s")
+    if metrics['llm_image']:
+        print(f"Average Image Gen: {sum(metrics['llm_image'])/len(metrics['llm_image']):.2f}s")
+    if metrics['render']:
+        print(f"Average Rendering: {sum(metrics['render'])/len(metrics['render']):.2f}s")
     print("="*60)
-    print(f"🎉 CORPUS COMPLETE!")
+    print("🎉 CORPUS COMPLETE!\n")
+    await llm_client.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate synthetic corporate lore corpus.")
     parser.add_argument("--num_docs", type=int, default=20, help="Number of documents to generate")
     parser.add_argument("--resume", type=str, default=None, help="Directory path of a previous run to resume")
     parser.add_argument("--theme", type=str, choices=["arcane", "cyberpunk", "space"], default="arcane", help="Theme setting for the corpus")
+    parser.add_argument("--world_prompt", type=str, default=None, help="Custom detailed prompt to enforce specific world building elements")
     args = parser.parse_args()
     
-    asyncio.run(generate_corpus(num_docs=args.num_docs, resume_dir=args.resume, theme=args.theme))
+    asyncio.run(generate_corpus(num_docs=args.num_docs, resume_dir=args.resume, theme=args.theme, world_prompt=args.world_prompt))
