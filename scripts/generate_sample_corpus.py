@@ -7,8 +7,10 @@ import base64
 import docx
 import time
 import logging
+import argparse
 from datetime import datetime
 from tqdm.asyncio import tqdm
+import networkx as nx
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.graph.config import WorldConfig
@@ -24,7 +26,13 @@ metrics = {"llm_text": [], "llm_image": [], "render": []}
 
 async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger):
     node_name = G.nodes[node_id]['name']
+    out_path = os.path.join(corpus_dir, f"{node_name}{ext}")
     
+    # Resumption check
+    if os.path.exists(out_path):
+        logger.info(f"[{node_name}] Skipping (already exists).")
+        return node_name
+        
     # Text Generation
     t0 = time.time()
     async with TEXT_SEMAPHORE:
@@ -82,7 +90,6 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
             
     # Rendering
     t0 = time.time()
-    out_path = os.path.join(corpus_dir, f"{node_name}{ext}")
     
     if ext in [".png", ".pdf"]:
         renderer.render_document(text, doc_type, out_path, embedded_image_path=embedded_img_path)
@@ -102,7 +109,7 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
     logger.info(f"[{node_name}] Rendered ({ext}): {t_render:.2f}s")
     return node_name
 
-async def generate_corpus(num_docs=20):
+async def generate_corpus(num_docs=20, resume_dir=None):
     print("="*60)
     print("🏭 SYNTHLORE PIPELINE: GENERATING FRESH SAMPLE CORPUS")
     print("="*60)
@@ -111,64 +118,97 @@ async def generate_corpus(num_docs=20):
     metrics.clear()
     metrics.update({"llm_text": [], "llm_image": [], "render": []})
     
-    # Setup Directories
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    corpus_dir = os.path.join(base_dir, "output", f"sample_corpus_{timestamp}")
-    os.makedirs(corpus_dir, exist_ok=True)
     
+    # State Management / Resumption
+    if resume_dir:
+        corpus_dir = os.path.abspath(resume_dir)
+        if not os.path.exists(corpus_dir):
+            raise FileNotFoundError(f"Resume directory not found: {corpus_dir}")
+        print(f"🔄 RESUMING PREVIOUS RUN from {corpus_dir}")
+        
+        # Load Graph
+        graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
+        with open(graph_path, "r") as f:
+            data = json.load(f)
+            G = nx.node_link_graph(data)
+            
+        # Load Manifest
+        manifest_path = os.path.join(corpus_dir, "manifest.json")
+        with open(manifest_path, "r") as f:
+            manifest = json.load(f)
+            
+        config = WorldConfig.default_arcane_industrial() # Base config for compiler
+        
+    else:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        corpus_dir = os.path.join(base_dir, "output", f"sample_corpus_{timestamp}")
+        os.makedirs(corpus_dir, exist_ok=True)
+        
+        print(f"\n[Phase 1] Generating graph...")
+        config = WorldConfig.default_arcane_industrial()
+        generator = KnowledgeGraphGenerator(config)
+        G = generator.generate(num_nodes=30)
+        
+        graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
+        with open(graph_path, "w") as f:
+            json.dump(nx.node_link_data(G), f, indent=2)
+            
+        # Create Manifest for deterministic resumption
+        dist = config.corpus_distribution
+        num_with_image = int(num_docs * dist.image_injection_ratio)
+        formats = []
+        for ext, ratio in dist.format_ratios.items():
+            formats.extend([ext] * int(num_docs * ratio))
+        while len(formats) < num_docs:
+            formats.append(list(dist.format_ratios.keys())[0])
+        random.shuffle(formats)
+        
+        target_nodes = list(G.nodes)[:num_docs]
+        valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
+        image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
+        
+        renderer = VisualRenderer()
+        manifest = {}
+        for i, node_id in enumerate(target_nodes):
+            manifest[node_id] = {
+                "ext": formats[i],
+                "doc_type": random.choice(list(renderer.profiles.keys())),
+                "needs_image": (i in image_indices)
+            }
+            
+        with open(os.path.join(corpus_dir, "manifest.json"), "w") as f:
+            json.dump(manifest, f, indent=2)
+
     # Setup Logger
     log_file = os.path.join(corpus_dir, "generation.log")
     logger = logging.getLogger("SynthloreGenerator")
     logger.setLevel(logging.INFO)
+    
+    # Remove existing handlers if rerunning in same python process
+    if logger.hasHandlers():
+        logger.handlers.clear()
+        
     fh = logging.FileHandler(log_file)
     fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logger.addHandler(fh)
-    
-    print(f"\n[Phase 1] Generating graph... (Logs saving to {log_file})")
-    t0 = time.time()
-    config = WorldConfig.default_arcane_industrial()
-    generator = KnowledgeGraphGenerator(config)
-    G = generator.generate(num_nodes=30)
-    graph_time = time.time() - t0
-    logger.info(f"Saved Ground Truth Graph in {graph_time:.2f}s")
-    
-    graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
-    import networkx as nx
-    with open(graph_path, "w") as f:
-        json.dump(nx.node_link_data(G), f, indent=2)
-    
-    # Distributions
-    dist = config.corpus_distribution
-    num_with_image = int(num_docs * dist.image_injection_ratio)
-    formats = []
-    for ext, ratio in dist.format_ratios.items():
-        formats.extend([ext] * int(num_docs * ratio))
-    while len(formats) < num_docs:
-        formats.append(list(dist.format_ratios.keys())[0])
-    random.shuffle(formats)
     
     llm_client = UnifiedAIClient()
     await llm_client.initialize()
     compiler = DocumentCompiler(llm_client, config)
     renderer = VisualRenderer()
     
-    target_nodes = list(G.nodes)[:num_docs]
-    valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
-    image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
-    
-    print(f"\n[Phase 2 & 3] Compiling and Rendering {num_docs} Documents Concurrently...")
+    print(f"\n[Phase 2 & 3] Compiling and Rendering {len(manifest)} Documents Concurrently...")
     
     tasks = []
-    for i, node_id in enumerate(target_nodes):
-        doc_type = random.choice(list(renderer.profiles.keys()))
-        ext = formats[i]
-        needs_image = i in image_indices
+    for node_id, m_data in manifest.items():
         tasks.append(asyncio.create_task(
-            process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger)
+            process_document(
+                llm_client, compiler, renderer, G, node_id, 
+                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger
+            )
         ))
         
-    # Use tqdm to monitor progress of the concurrent tasks
     for coro in tqdm.as_completed(tasks, total=len(tasks), desc="Processing Documents", unit="doc"):
         await coro
         
@@ -182,15 +222,20 @@ async def generate_corpus(num_docs=20):
     logger.info(f"Total Pipeline Execution Time: {total_time:.2f}s")
     
     print("\n" + "="*60)
-    print("📊 PARALLEL PIPELINE METRICS & ETA CALCULATIONS")
+    print("📊 PARALLEL PIPELINE METRICS")
     print("="*60)
     print(f"Output Directory: {corpus_dir}")
-    print(f"Total Pipeline Execution Time: {total_time:.2f}s (CONCURRENT)")
-    print(f"Average Text Gen (gpt-5.6-luna):  {avg_txt:.2f}s per doc")
-    print(f"Average Image Gen (gpt-image-2): {avg_img:.2f}s per image")
-    print(f"Average Rendering Time:        {avg_render:.2f}s per doc")
+    print(f"Execution Time (This Run): {total_time:.2f}s")
+    if metrics['llm_text']: print(f"Average Text Gen:  {avg_txt:.2f}s")
+    if metrics['llm_image']: print(f"Average Image Gen: {avg_img:.2f}s")
+    if metrics['render']: print(f"Average Rendering: {avg_render:.2f}s")
     print("="*60)
-    print(f"🎉 CORPUS COMPLETE! Generated {num_docs} documents.")
+    print(f"🎉 CORPUS COMPLETE!")
 
 if __name__ == "__main__":
-    asyncio.run(generate_corpus(20))
+    parser = argparse.ArgumentParser(description="Generate synthetic corporate lore corpus.")
+    parser.add_argument("--num_docs", type=int, default=20, help="Number of documents to generate")
+    parser.add_argument("--resume", type=str, default=None, help="Directory path of a previous run to resume")
+    args = parser.parse_args()
+    
+    asyncio.run(generate_corpus(num_docs=args.num_docs, resume_dir=args.resume))
