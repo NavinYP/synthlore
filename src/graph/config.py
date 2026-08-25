@@ -65,3 +65,65 @@ class WorldConfig:
             start_year=1840,
             end_year=1899
         )
+
+    @classmethod
+    def default_cyberpunk_corporate(cls):
+        return cls(
+            setting_name="Cyberpunk Corporate Syndicate",
+            tone="Neon-lit, hyper-capitalist, cynical, high-tech low-life, surveillance state.",
+            factions=["OmniCorp", "Neon Syndicate", "NetRunners", "The Board"],
+            node_types=[
+                NodeType(name="Operative", properties=["alias", "cyberware", "faction", "debt"]),
+                NodeType(name="Mainframe", properties=["designation", "security_level", "status", "location"]),
+                NodeType(name="Data Hub", properties=["sector", "bandwidth", "manager"]),
+                NodeType(name="Syndicate", properties=["name", "specialty", "influence"]),
+                NodeType(name="Executive", properties=["name", "clearance_level", "assigned_hub"]),
+                NodeType(name="Biotech Lab", properties=["designation", "output_material", "hazards"]),
+            ],
+            edge_types=[
+                EdgeType(name="CONTRACTED_TO", source_type="Operative", target_type="Data Hub", description="Employment"),
+                EdgeType(name="HACKS", source_type="Operative", target_type="Mainframe", description="Intrusion duty"),
+                EdgeType(name="ROUTES_THROUGH", source_type="Data Hub", target_type="Mainframe", description="Data dependency"),
+                EdgeType(name="AFFILIATED_WITH", source_type="Operative", target_type="Syndicate", description="Affiliation"),
+                EdgeType(name="SUPPLIES", source_type="Biotech Lab", target_type="Data Hub", description="Material flow"),
+                EdgeType(name="AUDITS", source_type="Executive", target_type="Data Hub", description="Inspection"),
+            ],
+            document_types=["Syndicate Ledger", "NetRunner Log", "System Crash Report", "Operative's Burner Cache", "Corporate Contract", "Termination Notice", "Bribe Record"],
+            corpus_distribution=CorpusDistribution(
+                image_injection_ratio=0.10,
+                format_ratios={".pdf": 0.40, ".png": 0.20, ".docx": 0.20, ".txt": 0.20}
+            ),
+            start_year=2080,
+            end_year=2120
+        )
+
+    @classmethod
+    def default_deep_space_colony(cls):
+        return cls(
+            setting_name="Deep Space Mining Colony",
+            tone="Isolated, claustrophobic, survival-focused, stark, utilitarian.",
+            factions=["Terra-Corp", "Outer Rim Miners", "Station AI", "Smuggler Cartel"],
+            node_types=[
+                NodeType(name="Colonist", properties=["name", "specialty", "faction", "health"]),
+                NodeType(name="Life Support Node", properties=["designation", "capacity", "status", "level"]),
+                NodeType(name="Mining Sector", properties=["name", "yield", "manager"]),
+                NodeType(name="Cartel", properties=["name", "contraband", "influence"]),
+                NodeType(name="Commander", properties=["name", "clearance", "assigned_sector"]),
+                NodeType(name="Ore Refinery", properties=["name", "output_material", "radiation"]),
+            ],
+            edge_types=[
+                EdgeType(name="STATIONED_AT", source_type="Colonist", target_type="Mining Sector", description="Employment"),
+                EdgeType(name="MAINTAINS", source_type="Colonist", target_type="Life Support Node", description="Technical duty"),
+                EdgeType(name="OXYGEN_SUPPLY", source_type="Mining Sector", target_type="Life Support Node", description="Dependency"),
+                EdgeType(name="OWES", source_type="Colonist", target_type="Cartel", description="Affiliation"),
+                EdgeType(name="PROCESSES_FOR", source_type="Ore Refinery", target_type="Mining Sector", description="Material flow"),
+                EdgeType(name="INSPECTS", source_type="Commander", target_type="Mining Sector", description="Inspection"),
+            ],
+            document_types=["Cargo Manifest", "Comms Intercept", "Life Support Log", "Contraband Ledger", "Colony Directive", "Incident Report", "Refinery Output"],
+            corpus_distribution=CorpusDistribution(
+                image_injection_ratio=0.10,
+                format_ratios={".pdf": 0.40, ".png": 0.20, ".docx": 0.20, ".txt": 0.20}
+            ),
+            start_year=2310,
+            end_year=2350
+        )
