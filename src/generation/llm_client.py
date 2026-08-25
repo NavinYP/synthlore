@@ -71,11 +71,11 @@ class UnifiedAIClient:
             
             # Sub-clients (fallback to chat client if specific endpoint isn't provided)
             self.embedding_client = self._create_openai_client(
-                settings.embedding_endpoint, settings.embedding_api_key
+                settings.embedding_endpoint, settings.embedding_api_key or settings.azure_openai_api_key
             ) or self.chat_client
             
             self.image_client = self._create_openai_client(
-                settings.image_endpoint, settings.image_api_key
+                settings.image_endpoint, settings.image_api_key or settings.azure_openai_api_key
             ) or self.chat_client
 
     async def close(self):
@@ -142,10 +142,13 @@ class UnifiedAIClient:
             endpoint = settings.rerank_endpoint or settings.azure_openai_endpoint
             api_key = settings.rerank_api_key or settings.azure_openai_api_key
             
-            # Ensure proper v1/rerank route for Azure Cohere deployments
+            # Ensure proper route for Azure Cohere deployments
             url = endpoint.rstrip('/')
-            if not url.endswith("/v1/rerank"):
+            if not url.endswith("rerank"):
                 url += "/v1/rerank" if url.endswith("/v1") else "/v1/rerank"
+                
+            if "?" not in url:
+                url += "?api-version=2024-05-01-preview"
                 
             headers = {
                 "Authorization": f"Bearer {api_key}",
@@ -155,7 +158,8 @@ class UnifiedAIClient:
             payload = {
                 "query": query,
                 "documents": documents,
-                "top_n": len(documents)
+                "top_n": len(documents),
+                "model": settings.rerank_deployment_name
             }
             
             async with httpx.AsyncClient() as client:
