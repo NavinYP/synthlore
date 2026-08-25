@@ -101,22 +101,30 @@ class VisualRenderer:
             
         if embedded_image_path and os.path.exists(embedded_image_path):
             try:
-                # Load, resize, and paste the generated image
                 insert_img = Image.open(embedded_image_path).convert("RGBA")
-                # Resize to fit within margins
                 max_w = width - (2 * margin)
-                max_h = height - offset - margin
                 
-                if max_h > 100:  # Ensure we have space
-                    insert_img.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
-                    # Center it horizontally
-                    paste_x = margin + (max_w - insert_img.width) // 2
-                    paste_y = offset
-                    
-                    # Convert transparent background to document background if needed
-                    bg = Image.new("RGBA", insert_img.size, profile.bg_color + (255,))
-                    bg.paste(insert_img, (0, 0), insert_img)
-                    img.paste(bg.convert("RGB"), (paste_x, paste_y))
+                # If there's not enough room at the bottom, expand the canvas
+                required_h = 400
+                if height - offset - margin < required_h:
+                    new_height = offset + required_h + margin * 2
+                    new_img = Image.new('RGB', (width, new_height), color=profile.bg_color)
+                    new_img.paste(img, (0, 0))
+                    img = new_img
+                    draw = ImageDraw.Draw(img) # Update draw object
+                    height = new_height
+                    if profile.has_grid:
+                        self._draw_grid(draw, width, height, tuple(max(0, c - 20) for c in profile.bg_color))
+                
+                max_h = height - offset - margin
+                insert_img.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+                
+                paste_x = margin + (max_w - insert_img.width) // 2
+                paste_y = offset
+                
+                bg = Image.new("RGBA", insert_img.size, profile.bg_color + (255,))
+                bg.paste(insert_img, (0, 0), insert_img)
+                img.paste(bg.convert("RGB"), (paste_x, paste_y))
             except Exception as e:
                 print(f"Failed to embed image: {e}")
             

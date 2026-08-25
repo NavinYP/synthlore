@@ -5,6 +5,7 @@ import random
 import asyncio
 import base64
 import docx
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.graph.config import WorldConfig
@@ -19,6 +20,8 @@ async def generate_corpus(num_docs=10):
     print("🏭 SYNTHLORE PIPELINE: GENERATING FRESH SAMPLE CORPUS")
     print("="*60)
     
+    pipeline_start = time.time()
+    
     # Setup Directories
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     corpus_dir = os.path.join(base_dir, "output", "sample_corpus")
@@ -26,15 +29,17 @@ async def generate_corpus(num_docs=10):
     
     # 1. Phase 1: Graph Generation
     print("\n[Phase 1] Initializing WorldConfig and generating graph...")
+    t0 = time.time()
     config = WorldConfig.default_arcane_industrial()
     generator = KnowledgeGraphGenerator(config)
     G = generator.generate(num_nodes=30)
+    graph_time = time.time() - t0
     
     graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
     import networkx as nx
     with open(graph_path, "w") as f:
         json.dump(nx.node_link_data(G), f, indent=2)
-    print(f"   ✅ Saved Ground Truth Graph to {graph_path}")
+    print(f"   ✅ Saved Ground Truth Graph ({graph_time:.2f}s)")
     
     # 2. Initialization
     llm_client = UnifiedAIClient()
@@ -46,28 +51,33 @@ async def generate_corpus(num_docs=10):
     export_formats = [".png", ".pdf", ".docx", ".txt"]
     
     print(f"\n[Phase 2 & 3] Compiling and Rendering {num_docs} Documents...")
+    
+    metrics = {"llm_text": [], "llm_image": [], "render": []}
+    
     for i, node_id in enumerate(target_nodes):
         node_name = G.nodes[node_id]['name']
-        
-        # Determine Document Type & Format
         doc_type = random.choice(list(renderer.profiles.keys()))
         ext = random.choice(export_formats)
         
         print(f"   [{i+1}/{num_docs}] Processing {node_name} as [{doc_type}] -> {ext}")
         
         # Generate Markdown Text (Phase 2)
+        t0 = time.time()
         text = await compiler.compile_document(G, node_id, doc_type=doc_type)
+        t_text = time.time() - t0
+        metrics["llm_text"].append(t_text)
+        print(f"      📝 Text Gen (gpt-5.6-luna): {t_text:.2f}s")
         
-        # Save raw text and context for reference
         with open(os.path.join(corpus_dir, f"{node_name}_RAW.md"), "w") as f:
             f.write(text)
         with open(os.path.join(corpus_dir, f"{node_name}_CONTEXT.txt"), "w") as f:
             f.write(compiler.extract_subgraph_context(G, node_id))
             
-        # Image Asset Generation (~30% chance to have an image)
+        # Image Asset Generation (~35% chance)
         embedded_img_path = None
         if random.random() < 0.35 and ext != ".txt":
-            print(f"      🖌️ Generating DALL-E 3 visual asset for {node_name}...")
+            print(f"      🖌️ Generating visual asset for {node_name}...")
+            t0 = time.time()
             try:
                 img_prompt = f"A rough chalk sketch or technical blueprint of an Arcane Industrial entity named {node_name}. Monochromatic, highly detailed, parchment background."
                 response = await llm_client.image_client.images.generate(
@@ -80,13 +90,16 @@ async def generate_corpus(num_docs=10):
                 embedded_img_path = os.path.join(corpus_dir, f"{node_name}_drawing.png")
                 with open(embedded_img_path, "wb") as fh:
                     fh.write(base64.b64decode(img_b64))
-                print(f"      ✅ Visual asset downloaded.")
+                t_img = time.time() - t0
+                metrics["llm_image"].append(t_img)
+                print(f"      ✅ Asset Downloaded (gpt-image-2): {t_img:.2f}s")
             except Exception as e:
                 print(f"      ❌ Image generation failed: {e}")
                 
         # Render Document (Phase 3)
         out_path = os.path.join(corpus_dir, f"{node_name}{ext}")
         
+        t0 = time.time()
         if ext in [".png", ".pdf"]:
             renderer.render_document(text, doc_type, out_path, embedded_image_path=embedded_img_path)
         elif ext == ".docx":
@@ -99,11 +112,27 @@ async def generate_corpus(num_docs=10):
         elif ext == ".txt":
             with open(out_path, "w") as f:
                 f.write(text)
-                
-        print(f"      ✅ Rendered successfully: {os.path.basename(out_path)}")
+        
+        t_render = time.time() - t0
+        metrics["render"].append(t_render)
+        print(f"      ✅ Rendered ({ext}): {t_render:.2f}s")
 
     await llm_client.close()
+    
+    total_time = time.time() - pipeline_start
+    avg_txt = sum(metrics['llm_text'])/len(metrics['llm_text']) if metrics['llm_text'] else 0
+    avg_img = sum(metrics['llm_image'])/len(metrics['llm_image']) if metrics['llm_image'] else 0
+    avg_render = sum(metrics['render'])/len(metrics['render']) if metrics['render'] else 0
+    
     print("\n" + "="*60)
+    print("📊 PIPELINE METRICS & ETA CALCULATIONS")
+    print("="*60)
+    print(f"Total Pipeline Execution Time: {total_time:.2f}s")
+    print(f"Average Graph Generation:      {graph_time:.2f}s (Static)")
+    print(f"Average Text Gen (gpt-5.6-luna):  {avg_txt:.2f}s per doc")
+    print(f"Average Image Gen (gpt-image-2): {avg_img:.2f}s per image")
+    print(f"Average Rendering Time:        {avg_render:.2f}s per doc")
+    print("="*60)
     print(f"🎉 CORPUS COMPLETE! Generated {num_docs} documents in: {corpus_dir}")
 
 if __name__ == "__main__":
