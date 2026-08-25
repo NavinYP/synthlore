@@ -60,7 +60,7 @@ class VisualRenderer:
             
         draw.text((x+15, y+40), "SEALED", fill=(200, 50, 50), font=stamp_font)
 
-    def render_document(self, text: str, doc_type: str, output_path: str):
+    def render_document(self, text: str, doc_type: str, output_path: str, embedded_image_path: str = None):
         profile = self.profiles.get(doc_type, self.default_profile)
         
         width, height = 800, 1200
@@ -93,11 +93,32 @@ class VisualRenderer:
             wrapped_lines = textwrap.wrap(para, width=wrap_width)
             
             for line in wrapped_lines:
-                if offset > height - 100:
+                if offset > height - 100 and not embedded_image_path:
                     break # Stop if we run out of page (for simplicity in v1)
                 draw.text((margin, offset), line, font=font, fill=profile.text_color)
                 offset += int(profile.font_size * 1.5)
             offset += profile.font_size # Paragraph spacing
+            
+        if embedded_image_path and os.path.exists(embedded_image_path):
+            try:
+                # Load, resize, and paste the generated image
+                insert_img = Image.open(embedded_image_path).convert("RGBA")
+                # Resize to fit within margins
+                max_w = width - (2 * margin)
+                max_h = height - offset - margin
+                
+                if max_h > 100:  # Ensure we have space
+                    insert_img.thumbnail((max_w, max_h), Image.Resampling.LANCZOS)
+                    # Center it horizontally
+                    paste_x = margin + (max_w - insert_img.width) // 2
+                    paste_y = offset
+                    
+                    # Convert transparent background to document background if needed
+                    bg = Image.new("RGBA", insert_img.size, profile.bg_color + (255,))
+                    bg.paste(insert_img, (0, 0), insert_img)
+                    img.paste(bg.convert("RGB"), (paste_x, paste_y))
+            except Exception as e:
+                print(f"Failed to embed image: {e}")
             
         if profile.is_stamped:
             self._draw_stamp(img, draw, width, height)
