@@ -88,11 +88,14 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
                             quant_facts.append(f"{k.upper()}: {v}")
                             
                     if quant_facts:
+                        # Sometimes we still do charts for the quantitative data
                         fact_str = " | ".join(quant_facts)
                         chart_type = random.choice(["bar chart", "line graph", "radar chart", "scatter plot dashboard"])
                         
                         theme_aesthetics = {
                             "arcane": "sepia-toned, parchment, steampunk, brass and ink",
+                            "grim_fantasy": "ancient vellum, illuminated manuscript, blood-red ink",
+                            "franchise": "90s grimdark fantasy tabletop rulebook illustration, hand-drawn ink and parchment cartography, technical esoteric schematic with runic annotations",
                             "cyberpunk": "neon, holographic, high-contrast dark mode, glitch art",
                             "space": "utilitarian, monochrome, CRT monitor glow, industrial"
                         }
@@ -104,18 +107,28 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
                             "Make the typography large, highly legible, and centered. The visual style must be deeply immersive to the theme."
                         )
                     else:
-                        blueprint_type = random.choice(["technical blueprint", "chalk sketch", "architectural schematic", "holographic cross-section"])
-                        theme_aesthetics = {
-                            "arcane": "da Vinci style, ink on old vellum, clockwork",
-                            "cyberpunk": "wireframe, glowing cyan and magenta, corporate espionage style",
-                            "space": "stark white lines on dark blue grid, military grade"
-                        }
-                        aesthetic = theme_aesthetics.get(theme, "standard engineering")
+                        # Franchise Visual Assets
+                        entity_type = node_data.get("type", "")
                         
-                        img_prompt = (
-                            f"A {aesthetic} {blueprint_type} of a system component named '{node_name}'. "
-                            f"Include structural annotations and clear textual labels referencing the entity's name."
-                        )
+                        theme_aesthetics = {
+                            "arcane": "da Vinci style sketch, ink on old vellum, clockwork",
+                            "grim_fantasy": "dark fantasy digital painting, grimdark, gothic, high fantasy masterpiece, concept art",
+                            "franchise": "90s grimdark fantasy tabletop rulebook illustration, hand-drawn ink and parchment cartography, technical esoteric schematic with runic annotations",
+                            "cyberpunk": "cyberpunk concept art, synthwave, neon-lit, highly detailed",
+                            "space": "sci-fi concept art, Ridley Scott style, cinematic lighting"
+                        }
+                        aesthetic = theme_aesthetics.get(theme, "standard digital painting")
+                        
+                        if entity_type in ["Person", "Inquisitor", "Commander", "Executive", "Overseer"]:
+                            img_prompt = f"A highly detailed {aesthetic} character portrait of '{node_name}'. Show them in their thematic attire."
+                        elif entity_type in ["Stronghold", "Dispatch Hub", "Facility", "Colony"]:
+                            img_prompt = f"An epic {aesthetic} landscape or architectural map of '{node_name}'. Grand, imposing, and atmospheric."
+                        elif entity_type in ["Order", "Guild", "Syndicate", "Faction"]:
+                            img_prompt = f"A {aesthetic} banner, sigil, or heraldry for the faction known as '{node_name}'. Distinctive and intimidating."
+                        elif entity_type in ["Historical Crisis"]:
+                            img_prompt = f"A {aesthetic} historical painting depicting the tragic event known as '{node_name}'."
+                        else:
+                            img_prompt = f"A {aesthetic} relic illustration of the mystical or high-tech artifact known as '{node_name}'."
                         
                     response = await llm_client.image_client.images.generate(
                         model=settings.image_generation_deployment,
@@ -206,6 +219,10 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
             config = WorldConfig.default_cyberpunk_corporate()
         elif theme == "space":
             config = WorldConfig.default_deep_space_colony()
+        elif theme == "grim_fantasy":
+            config = WorldConfig.default_grim_fantasy()
+        elif theme == "franchise":
+            config = WorldConfig.default_franchise_ecosystem()
         else:
             config = WorldConfig.default_arcane_industrial()
             
@@ -219,6 +236,10 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
             config = WorldConfig.default_cyberpunk_corporate()
         elif theme == "space":
             config = WorldConfig.default_deep_space_colony()
+        elif theme == "grim_fantasy":
+            config = WorldConfig.default_grim_fantasy()
+        elif theme == "franchise":
+            config = WorldConfig.default_franchise_ecosystem()
         else:
             config = WorldConfig.default_arcane_industrial()
             
@@ -239,7 +260,12 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
             formats.append(list(dist.format_ratios.keys())[0])
         random.shuffle(formats)
         
-        target_nodes = list(G.nodes)[:num_docs]
+        # If num_docs > len(G.nodes), we need to sample with replacement to get multiple docs per entity
+        base_nodes = list(G.nodes)
+        target_nodes = []
+        for i in range(num_docs):
+            target_nodes.append(base_nodes[i % len(base_nodes)])
+        
         valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
         image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
         
@@ -314,7 +340,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate synthetic corporate lore corpus.")
     parser.add_argument("--num_docs", type=int, default=20, help="Number of documents to generate")
     parser.add_argument("--resume", type=str, default=None, help="Directory path of a previous run to resume")
-    parser.add_argument("--theme", type=str, choices=["arcane", "cyberpunk", "space"], default="arcane", help="Theme setting for the corpus")
+    parser.add_argument("--theme", type=str, choices=["arcane", "cyberpunk", "space", "grim_fantasy", "franchise"], default="franchise", help="Theme setting for the corpus")
     parser.add_argument("--world_prompt", type=str, default=None, help="Custom detailed prompt to enforce specific world building elements")
     args = parser.parse_args()
     

@@ -17,33 +17,68 @@ class KnowledgeGraphGenerator:
         
         # 1. Generate Nodes
         nodes = []
-        for _ in range(num_nodes):
-            node_id = str(uuid.uuid4())
-            node_type_obj = random.choice(self.config.node_types)
-            entity_type = node_type_obj.name
-            
-            # Add some basic temporal/metadata attributes
-            established_year = random.randint(self.config.start_year, self.config.end_year)
-            
-            node_data = {
-                "type": entity_type,
-                "established": established_year,
-                "name": self._generate_thematic_value("name", entity_type),
-                "active": random.choice([True, True, False])
-            }
-            
-            # Populate specific properties defined in the config
-            for prop in node_type_obj.properties:
-                if prop not in node_data:
-                    if prop in ["capacity", "throughput", "yield", "radiation", "debt", "bandwidth", "level"]:
-                        node_data[prop] = random.randint(10, 999)
-                    elif prop == "faction":
-                        node_data[prop] = random.choice(self.config.factions)
-                    else:
-                        node_data[prop] = self._generate_thematic_value(prop, entity_type)
-            
-            self.graph.add_node(node_id, **node_data)
-            nodes.append((node_id, entity_type))
+        if hasattr(self.config, 'core_counts') and self.config.core_counts:
+            for entity_type, count in self.config.core_counts.items():
+                node_type_obj = next((nt for nt in self.config.node_types if nt.name == entity_type), None)
+                if not node_type_obj: continue
+                for _ in range(count):
+                    node_id = str(uuid.uuid4())
+                    established_year = random.randint(self.config.start_year, self.config.end_year)
+                    node_data = {
+                        'type': entity_type,
+                        'is_core_cast': True,
+                        'established': established_year,
+                        'name': self._generate_thematic_value('name', entity_type),
+                        'active': random.choice([True, True, False])
+                    }
+                    for prop in node_type_obj.properties:
+                        if prop not in node_data:
+                            if prop in ['capacity', 'throughput', 'yield', 'radiation', 'debt', 'bandwidth', 'level']:
+                                node_data[prop] = random.randint(10, 999)
+                            elif prop == 'faction':
+                                
+                                # Guarantee all factions are used by mapping based on node index
+                                if prop == 'faction':
+                                    faction_idx = len(nodes) % len(self.config.factions)
+                                    node_data[prop] = self.config.factions[faction_idx]
+                            else:
+                                node_data[prop] = self._generate_thematic_value(prop, entity_type)
+                    self.graph.add_node(node_id, **node_data)
+                    nodes.append((node_id, entity_type))
+        else:
+            for _ in range(num_nodes):
+                node_id = str(uuid.uuid4())
+                node_type_obj = random.choice(self.config.node_types)
+                entity_type = node_type_obj.name
+                
+                # Add some basic temporal/metadata attributes
+                established_year = random.randint(self.config.start_year, self.config.end_year)
+                
+                is_core = len(nodes) < 7
+                node_data = {
+                    "type": entity_type,
+                    "is_core_cast": is_core,
+                    "established": established_year,
+                    "name": self._generate_thematic_value("name", entity_type),
+                    "active": random.choice([True, True, False])
+                }
+                
+                # Populate specific properties defined in the config
+                for prop in node_type_obj.properties:
+                    if prop not in node_data:
+                        if prop in ["capacity", "throughput", "yield", "radiation", "debt", "bandwidth", "level"]:
+                            node_data[prop] = random.randint(10, 999)
+                        elif prop == "faction":
+                            
+                                # Guarantee all factions are used by mapping based on node index
+                                if prop == 'faction':
+                                    faction_idx = len(nodes) % len(self.config.factions)
+                                    node_data[prop] = self.config.factions[faction_idx]
+                        else:
+                            node_data[prop] = self._generate_thematic_value(prop, entity_type)
+                
+                self.graph.add_node(node_id, **node_data)
+                nodes.append((node_id, entity_type))
 
         # 2. Generate Edges (strictly adhering to config rules)
         # We need to map available types to node lists for fast lookup
@@ -60,8 +95,13 @@ class KnowledgeGraphGenerator:
             if not allowed_out_edges:
                 continue
 
-            # Randomly select a few edges to form
-            num_edges_to_create = random.randint(1, 3)
+            # Core cast members get significantly more connections to weave the story together
+            is_franchise = hasattr(self.config, 'core_counts') and self.config.core_counts
+            if is_franchise:
+                num_edges_to_create = random.randint(6, 15)
+            else:
+                num_edges_to_create = random.randint(3, 8) if self.graph.nodes[node_id].get("is_core_cast") else random.randint(1, 3)
+            
             for _ in range(num_edges_to_create):
                 edge_rule = random.choice(allowed_out_edges)
                 target_candidates = nodes_by_type[edge_rule.target_type]
@@ -70,16 +110,21 @@ class KnowledgeGraphGenerator:
                     continue
                 
                 # World-Building Clustering Logic:
-                # 80% of the time, try to connect to a node in the SAME faction or region.
-                # 20% of the time, connect globally (spies, cross-faction trade, etc.)
+                # 40% High chance to attach to a 'Core Cast' node to center the franchise narrative
+                # 40% Intra-faction/region clustering
+                # 20% Connect globally
                 source_data = self.graph.nodes[node_id]
+                
+                core_targets = [t for t in target_candidates if self.graph.nodes[t].get("is_core_cast")]
                 local_candidates = [
                     t for t in target_candidates 
                     if self.graph.nodes[t].get("faction") == source_data.get("faction") 
                     or self.graph.nodes[t].get("region") == source_data.get("region")
                 ]
                 
-                if local_candidates and random.random() < 0.8:
+                if core_targets and random.random() < 0.4:
+                    target_id = random.choice(core_targets)
+                elif local_candidates and random.random() < 0.8:
                     target_id = random.choice(local_candidates)
                 else:
                     target_id = random.choice(target_candidates)
@@ -139,9 +184,9 @@ class KnowledgeGraphGenerator:
         banks = self.config.naming_banks
         
         if prop == "name":
-            if entity_type in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer"]:
+            if entity_type in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer", "Major Character"]:
                 return random.choice(banks.get("name_person", ["Unknown"])) + f" {random.randint(1,99)}"
-            elif entity_type == "Historical Crisis":
+            elif entity_type in ["Historical Crisis", "Historical Conflict"]:
                 return random.choice(banks.get("name_crisis", ["Unknown Event"]))
             else:
                 return random.choice(banks.get("name_facility", ["Unknown Facility"])) + f" {random.randint(100,999)}"

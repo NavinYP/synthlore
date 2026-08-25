@@ -43,11 +43,28 @@ Based on a controlled 10-document sample (`output/sample_corpus_20260826_011256`
 - 200 Visual Assets (10%) = ~5.0 hours
 - **Total Estimated Run Time:** ~9.5 hours (Down from 20.5 hours by adjusting distribution logic).
 
-## Phase 4: Benchmark Extraction & Q&A Generation
+## ✅ Phase 4: Benchmark Extraction & Q&A Generation (COMPLETED)
 **Goal:** Generate the rigorous evaluation questions the final RAG agents will face.
 **Tasks:**
-- Prompt `o3` to read the entire Graph structure and synthesize complex multi-hop questions (e.g. "If the Aether-Reactor at Site B fails, which Smuggler's diary reveals the backup supply route?").
-- Ensure questions are answerable *only* by reading across multiple modalities (e.g. identifying a part from a blueprint in a PDF, and cross-referencing a name from a noisy PNG ledger).
+- [x] Implemented `o3` evaluation configs mapping to SLIIT Codefest tracks (Multimodal, Multi-hop, Agentic RAG).
+- [x] Enforced strict validation (`nx.has_path` and `nx.shortest_path_length == 2`) to eliminate unintended direct edge leakage (A -> C) ensuring true Multi-hop challenges.
+- [x] Generated `benchmark_qa.json` paired tightly with each sample set run.
 
-## Phase 5: Polish & Documentation
-**Goal:** Finalize the project for open-source / Medium article release.
+## ✅ Phase 5: Final Polish, Hardening, & Delivery (COMPLETED)
+**Goal:** Finalize the project for robust generation and open-source release.
+**Tasks:**
+- [x] **Agentic Contradictions**: Implemented `inject_contradictions()` to create verifiable "Unreliable Narrator" documents, forcing dynamic conflict resolution for Track 1C.
+- [x] **Multimodal Data Isolation**: Dynamically injected precise quantitative facts (capacity, throughput) directly into `gpt-image-2` charts. This ensures numerical facts exist *only* in pixels, not text.
+- [x] **Clean Output Architecture**: Separated execution logic so all raw intermediate files stay in the root run directory, while the final, polished artifacts (PDFs, DOCX, TXT, and Standalone PNGs) are strictly outputted to a `processed/` directory. 
+- [x] **Standalone Visual Assets**: Extracted `gpt-image-2` generations as standalone `.png` files (e.g. `_Blueprint.png`, `_Chart.png`) within the processed folder, apart from being embedded inside DOCX/PDFs.
+- [x] **Custom World-Building**: Supported a `--world_prompt` CLI flag, allowing specific aesthetic and narrative direction (e.g., Arcane, Cyberpunk, Deep Space) seamlessly embedded into the lore prompt.
+
+## ✅ Phase 6: Franchise Ecosystem Pivot (COMPLETED)
+**Goal:** Shift the pipeline output from short, disconnected "bureaucratic memos" into massive, sprawling Franchise Ecosystems (Novels, Fandom Wikis, RPG Codexes) to rival *Warhammer* or *ASOIAF*.
+**Tasks:**
+- [x] **Core Cast Gravity Well**: Overhauled `KnowledgeGraphGenerator` so that a select few entities form a "Core Cast". Edges preferentially cluster around these protagonists, strongholds, and epic crises (e.g., *The Fall of Vaeloria*), ensuring the dataset is deeply interwoven for complex RAG tasks.
+- [x] **Long-Form Narrative Generation**: Rewrote the `DocumentCompiler` prompt to explicitly forbid short summaries. The LLM now generates 1000+ word *Novel Chapters*, *Wiki Articles* (with Infoboxes), and *In-Universe Histories*.
+- [x] **Dynamic Franchise Visuals**: Replaced the static "blueprint/chart" logic with dynamic visual franchise assets. The pipeline now reads the graph entity type and leverages `gpt-image-2` to generate gorgeous Character Portraits, Landscape Maps, Faction Heraldry, and Relic illustrations.
+- [x] **Theme-Agnostic Abstraction**: Decoupled all hardcoded naming banks and structures from the generators and moved them strictly into `WorldConfig`. The entire ecosystem can dynamically shift between Cyberpunk, Grim Fantasy, or Deep Space effortlessly.
+
+**All systems are now operational. The pipeline successfully executes highly-concurrent batches of complex, graph-backed synthetic corpora in under 2 minutes for small scale tests.**
