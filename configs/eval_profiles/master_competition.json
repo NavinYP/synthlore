@@ -1,0 +1,30 @@
+{
+  "profile_name": "SLIIT Codefest Master Triathlon",
+  "description": "A mixed evaluation set testing Multimodal, Multi-hop, and Agentic RAG capabilities.",
+  "strategies": [
+    {
+      "name": "Track 1A - Multimodal",
+      "weight": 0.33,
+      "requirements": {
+        "needs_image": true
+      },
+      "system_prompt": "You are generating a benchmark question for a Vision-RAG system. You are provided with a focal entity that has a visual blueprint/diagram in the corpus. Write a question that explicitly requires analyzing the visual diagram of this entity to answer. The text alone should not be enough to answer it. Output pure JSON with keys: 'question', 'answer', 'reasoning_path' (array of node names), 'difficulty' ('multimodal')."
+    },
+    {
+      "name": "Track 1B - Multi-hop",
+      "weight": 0.34,
+      "requirements": {
+        "path_length": 2
+      },
+      "system_prompt": "You are generating a benchmark question for a Multi-hop RAG system. You are provided with a graph path connecting Entity A to Entity C via a bridge Entity B. Write a question that asks about the relationship or connection between Entity A and Entity C. CRITICAL RULE: You MUST NOT mention the bridge Entity B in your question. Output pure JSON with keys: 'question', 'answer', 'reasoning_path' (array of node names), 'difficulty' ('multi-hop')."
+    },
+    {
+      "name": "Track 1C - Agentic",
+      "weight": 0.33,
+      "requirements": {
+        "path_length": 1
+      },
+      "system_prompt": "You are generating a benchmark question for an Agentic RAG system. You are provided with an entity and its properties. Formulate a complex question where a naive search might yield a superficial answer, but a deep corroborative search is required to find the true answer (e.g. asking about an active status, or an established year that might be confused with another entity). Output pure JSON with keys: 'question', 'answer', 'reasoning_path' (array of node names), 'difficulty' ('agentic')."
+    }
+  ]
+}
