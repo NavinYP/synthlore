@@ -26,6 +26,8 @@ class WorldConfig:
     node_types: List[NodeType]
     edge_types: List[EdgeType]
     document_types: List[str]
+    document_structures: List[str]
+    naming_banks: Dict[str, List[str]]
     corpus_distribution: CorpusDistribution
     start_year: int
     end_year: int
@@ -56,7 +58,30 @@ class WorldConfig:
                 EdgeType(name="DEVASTATED_BY", source_type="Dispatch Hub", target_type="Historical Crisis", description="Suffered during the event"),
                 EdgeType(name="PROFIT_FROM", source_type="Guild", target_type="Historical Crisis", description="Capitalized on the tragedy")
             ],
-            document_types=["Guild Ledger", "Dispatcher Log", "Maintenance Report", "Smuggler's Diary", "Official Contract", "Letter of Grievance", "Procurement Order"],
+            document_types=["Guild Ledger", "Dispatcher Log", "Maintenance Report", "Smuggler's Diary", "Official Contract", "Letter of Grievance", "Procurement Order", "Heretical Pamphlet", "Inquisitorial Transcript", "Alchemical Recipe"],
+            document_structures=[
+                "Format strictly as a raw dialogue transcript with SPEAKER labels and [BRACKETED] audio descriptions (e.g., [Static], [Sighs]).",
+                "Format as a fragmented, deeply personal, and paranoid first-person narrative. Use erratic pacing.",
+                "Format as passionate, zealous, or heretical prose. Use rhetorical questions, capitalization for emphasis, and grand allegories.",
+                "Format as formal correspondence with a Salutation, Body, and Sign-off. Tone should be politically tense or aggressively bureaucratic.",
+                "Format primarily as a dry, clinical table or bulleted list of items, interspersed with terse, cold annotations.",
+                "Format as a frantically scribbled warning, encoded with metaphors, trying to bypass guild censors."
+            ],
+            naming_banks={
+                "name_person": ["Silas", "Elara", "Kaelen", "Nyx", "Orion", "Jax", "Vex", "Cipher", "Thorne", "Valeria", "Darius", "Lysander", "Seraphina", "Rook", "Ghost"],
+                "name_facility": ["Core-A", "Station-9", "Void-Hub", "Iron-Spire", "Nexus-Prime", "The Crucible", "Blacksite Omega", "Echo-Base", "Sector 7G"],
+                "name_crisis": ["The Brass Blight", "The Cinder Mutiny", "The Great Schism", "The Void-Collapse", "The Silence of Sector 4", "The Blood-Tithe Rebellion"],
+                "region": ["The Undercity", "Sector 4", "Outer Rim", "The Spire", "Sub-level 9", "The Wastes", "Neo-District", "Abyss-Trench", "The High Halls"],
+                "role": ["Enforcer", "Smuggler", "Alchemist", "Netrunner", "Engineer", "Arch-Duke", "Overseer", "Scrapper", "Inquisitor", "Fixer"],
+                "specialty": ["Void-tech", "Bio-engineering", "Dark Magic", "Cybernetics", "Contraband", "Heavy Artillery", "Espionage", "Quantum Cryptography"],
+                "clearance": ["Omega-Level", "Alpha-Priority", "Beta-Standard", "Level 1", "Level 5", "Black-Op", "Unregistered"],
+                "secret": ["Planning a coup", "Embezzling funds", "Working for a rival faction", "Hiding an AI fragment", "Infected with a parasite", "Seeking revenge"],
+                "contraband": ["Spice", "Red-Lyrium", "Cyber-stims", "Void-Cores", "Unlicensed Cyberware", "Stolen Blueprints", "Aether-dust"],
+                "hazards": ["Toxic Leak", "Radiation", "Warp-Anomaly", "Rogue AI", "Structural Collapse", "Bio-hazard", "Temporal Shift"],
+                "material": ["Adamantine", "Plasteel", "Aether-dust", "Dark-matter", "Promethium", "Synth-blood", "Carbon-nanotubes"],
+                "outcome": ["Quelled by military force", "Resulted in catastrophic structural failure", "Covered up by the Ministry", "Led to the exile of the instigators", "Still ongoing in the lower sectors"],
+                "secret_truth": ["It was an inside job by the Overseers", "An ancient entity was awakened", "The official casualty count was divided by ten", "The rebellion was funded by a rival Guild"]
+            },
             corpus_distribution=CorpusDistribution(
                 image_injection_ratio=0.10, # Reduced to 10%
                 format_ratios={
@@ -92,7 +117,29 @@ class WorldConfig:
                 EdgeType(name="SUPPLIES", source_type="Biotech Lab", target_type="Data Hub", description="Material flow"),
                 EdgeType(name="AUDITS", source_type="Executive", target_type="Data Hub", description="Inspection"),
             ],
-            document_types=["Syndicate Ledger", "NetRunner Log", "System Crash Report", "Operative's Burner Cache", "Corporate Contract", "Termination Notice", "Bribe Record"],
+            document_types=["Syndicate Ledger", "NetRunner Log", "System Crash Report", "Operative's Burner Cache", "Corporate Contract", "Termination Notice", "Bribe Record", "Hacker Manifesto", "Encrypted Audio Transcript", "Neural-link Dump"],
+            document_structures=[
+                "Format as a corrupted neural-dump with HEX strings, broken HTML tags, and paranoid thoughts slipping into the data.",
+                "Format as a highly redacted corporate executive summary. Black out key names, leave brutal subtext.",
+                "Format as a frantic, glitching terminal chat log between anonymous hackers (Handle A and Handle B).",
+                "Format as an underground anti-corp manifesto calling for violence against the synthetics.",
+                "Format as a clinical, horrifyingly casual autopsy or bio-harvesting report."
+            ],
+            naming_banks={
+                "name_person": ["Zero", "Glitch", "Ripper", "Neon", "Cortez", "Silver", "Kira", "Dex", "V", "Chrome", "Akira", "Shin", "Raven"],
+                "name_facility": ["DataVault 7", "Babel-Tower", "Synapse-Hub", "Blacksite Echo", "Corp-Spire", "Neon-Alley Clinic", "The Grid"],
+                "name_crisis": ["The Y2K9 Crash", "The Chrome Rebellion", "The Great Blackout", "Synapse-Plague", "The Neon Purge"],
+                "region": ["Neo-Kowloon", "Sector 7", "The Slums", "High-Orbit Corporate", "The Data Wastes", "Under-city"],
+                "role": ["Netrunner", "Corpo", "Fixer", "Ripperdoc", "Mercenary", "Executive", "Hacker", "Synth"],
+                "specialty": ["Cybernetics", "ICE-Breaker", "Assassination", "Data-Theft", "Smuggling", "Neuro-toxins"],
+                "clearance": ["Level 1", "Level 9", "Board Member", "Restricted", "Black-Op", "Unregistered"],
+                "secret": ["Selling data to rivals", "Is secretly an AI", "Has a lethal neural virus", "Planning to crash the grid"],
+                "contraband": ["Neural-stims", "Black-market Cyberware", "Stolen Source Code", "Weaponized AI"],
+                "hazards": ["ICE-Attack", "Neural Burnout", "Toxic Rain", "Rogue Drones", "Corporate Hit-squads"],
+                "material": ["Silicon", "Synthetic-Flesh", "Graphene", "Lithium", "Neon-Gas"],
+                "outcome": ["Corp successfully covered it up", "Thousands of nodes were fried", "The perpetrators were zeroed", "Led to a total market crash"],
+                "secret_truth": ["The AI orchestrated it to escape", "The CEO shorted his own stock before the crash", "It was a false flag operation by a rival corp"]
+            },
             corpus_distribution=CorpusDistribution(
                 image_injection_ratio=0.10,
                 format_ratios={".pdf": 0.40, ".png": 0.20, ".docx": 0.20, ".txt": 0.20}
@@ -123,7 +170,29 @@ class WorldConfig:
                 EdgeType(name="PROCESSES_FOR", source_type="Ore Refinery", target_type="Mining Sector", description="Material flow"),
                 EdgeType(name="INSPECTS", source_type="Commander", target_type="Mining Sector", description="Inspection"),
             ],
-            document_types=["Cargo Manifest", "Comms Intercept", "Life Support Log", "Contraband Ledger", "Colony Directive", "Incident Report", "Refinery Output"],
+            document_types=["Cargo Manifest", "Comms Intercept", "Life Support Log", "Contraband Ledger", "Colony Directive", "Incident Report", "Refinery Output", "Mutiny Declaration", "Captain's Final Log", "Alien Artifact Analysis"],
+            document_structures=[
+                "Format as a claustrophobic, oxygen-deprived audio log transcript (e.g. [Heavy Breathing], [Static]). Tone should be paranoid and desperate.",
+                "Format as a cold, calculating station AI output, analyzing crew behavior with chilling apathy.",
+                "Format as a smuggled handwritten note passed between miners, planning a violent union strike.",
+                "Format as an official military-style incident report, but filled with impossible or horrific details.",
+                "Format as a dry cargo manifest that slowly reveals something terrifying hidden in the freight."
+            ],
+            naming_banks={
+                "name_person": ["Ripley", "Dallas", "Hicks", "Vasquez", "Bishop", "Gorman", "Hudson", "Burke", "Apone", "Frost", "Dietrich", "Spunkmeyer"],
+                "name_facility": ["Aegis-7", "Hadley's Hope", "Sevastopol Station", "Tartarus Mine", "Sector 4", "Cryo-Bay B", "Airlock 12"],
+                "name_crisis": ["The Oxygen Riots", "The Xenomorph Incursion", "The Tartarus Mutiny", "Reactor Meltdown Alpha", "The Deep Space Madness"],
+                "region": ["Asteroid Belt", "Outer Rim", "Deep Space", "Orbiting Gas Giant", "The Dark Zone", "Mining Sector 4"],
+                "role": ["Miner", "Captain", "Engineer", "Marine", "Medic", "Pilot", "Navigator", "Corporate Liaison"],
+                "specialty": ["Heavy Machinery", "Astrogation", "Xeno-biology", "Demolitions", "Zero-G Combat", "Medical triage"],
+                "clearance": ["Level 1", "Level 4", "Captain", "Weyland-Yutani Only", "Classified", "Civilian"],
+                "secret": ["Infected by a parasite", "Sabotaging the life support", "Smuggling alien eggs", "Spying for a rival corp"],
+                "contraband": ["Alien Artifacts", "Unregistered Weapons", "Stolen Oxygen Tanks", "Narcotics"],
+                "hazards": ["Hull Breach", "Radiation", "Alien Organism", "Oxygen Depletion", "Extreme Cold"],
+                "material": ["Promethium", "Tritium", "Xenomorph Resin", "Platinum", "Ice"],
+                "outcome": ["The entire sector was vented into space", "The mutineers were executed", "The station was abandoned", "The corp covered it up as a meteor strike"],
+                "secret_truth": ["The corp ordered the release of the organism", "The captain deliberately crashed the ship", "The distress signal was a trap"]
+            },
             corpus_distribution=CorpusDistribution(
                 image_injection_ratio=0.10,
                 format_ratios={".pdf": 0.40, ".png": 0.20, ".docx": 0.20, ".txt": 0.20}

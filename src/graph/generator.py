@@ -135,53 +135,37 @@ class KnowledgeGraphGenerator:
         }
 
     def _generate_thematic_value(self, prop: str, entity_type: str) -> str:
-        """Procedurally generates G.R.R. Martin-style deep lore attributes based on the property requested."""
-        theme = self.config.setting_name.lower()
-        
-        banks = {
-            "name_person": ["Silas", "Elara", "Kaelen", "Nyx", "Orion", "Jax", "Vex", "Cipher", "Thorne", "Valeria", "Darius", "Lysander", "Seraphina", "Rook", "Ghost"],
-            "name_facility": ["Core-A", "Station-9", "Void-Hub", "Iron-Spire", "Nexus-Prime", "The Crucible", "Blacksite Omega", "Echo-Base", "Sector 7G"],
-            "name_crisis": ["The Brass Blight", "The Cinder Mutiny", "The Great Schism", "The Void-Collapse", "The Silence of Sector 4", "The Blood-Tithe Rebellion"],
-            "region": ["The Undercity", "Sector 4", "Outer Rim", "The Spire", "Sub-level 9", "The Wastes", "Neo-District", "Abyss-Trench", "The High Halls"],
-            "role": ["Enforcer", "Smuggler", "Alchemist", "Netrunner", "Engineer", "Arch-Duke", "Overseer", "Scrapper", "Inquisitor", "Fixer"],
-            "specialty": ["Void-tech", "Bio-engineering", "Dark Magic", "Cybernetics", "Contraband", "Heavy Artillery", "Espionage", "Quantum Cryptography"],
-            "clearance": ["Omega-Level", "Alpha-Priority", "Beta-Standard", "Level 1", "Level 5", "Black-Op", "Unregistered"],
-            "secret": ["Planning a coup", "Embezzling funds", "Working for a rival faction", "Hiding an AI fragment", "Infected with a parasite", "Seeking revenge"],
-            "contraband": ["Spice", "Red-Lyrium", "Cyber-stims", "Void-Cores", "Unlicensed Cyberware", "Stolen Blueprints", "Aether-dust"],
-            "hazards": ["Toxic Leak", "Radiation", "Warp-Anomaly", "Rogue AI", "Structural Collapse", "Bio-hazard", "Temporal Shift"],
-            "material": ["Adamantine", "Plasteel", "Aether-dust", "Dark-matter", "Promethium", "Synth-blood", "Carbon-nanotubes"],
-            "outcome": ["Quelled by military force", "Resulted in catastrophic structural failure", "Covered up by the Ministry", "Led to the exile of the instigators", "Still ongoing in the lower sectors"],
-            "secret_truth": ["It was an inside job by the Overseers", "An ancient entity was awakened", "The official casualty count was divided by ten", "The rebellion was funded by a rival Guild"]
-        }
+        """Procedurally generates deep lore attributes based on the dynamic naming banks."""
+        banks = self.config.naming_banks
         
         if prop == "name":
             if entity_type in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer"]:
-                return random.choice(banks["name_person"]) + f" {random.randint(1,99)}"
+                return random.choice(banks.get("name_person", ["Unknown"])) + f" {random.randint(1,99)}"
             elif entity_type == "Historical Crisis":
-                return random.choice(banks["name_crisis"])
+                return random.choice(banks.get("name_crisis", ["Unknown Event"]))
             else:
-                return random.choice(banks["name_facility"]) + f" {random.randint(100,999)}"
+                return random.choice(banks.get("name_facility", ["Unknown Facility"])) + f" {random.randint(100,999)}"
                 
         elif prop in ["region", "location", "sector"]:
-            return random.choice(banks["region"])
+            return random.choice(banks.get("region", ["Unknown Region"]))
         elif prop in ["role", "manager"]:
-            return random.choice(banks["role"])
+            return random.choice(banks.get("role", ["Unknown Role"]))
         elif prop == "specialty":
-            return random.choice(banks["specialty"])
+            return random.choice(banks.get("specialty", ["Unknown Specialty"]))
         elif prop in ["clearance", "clearance_level", "security_level"]:
-            return random.choice(banks["clearance"])
+            return random.choice(banks.get("clearance", ["Unknown Clearance"]))
         elif prop == "secret":
-            return random.choice(banks["secret"])
+            return random.choice(banks.get("secret", ["Unknown Secret"]))
         elif prop == "contraband":
-            return random.choice(banks["contraband"])
+            return random.choice(banks.get("contraband", ["Unknown Contraband"]))
         elif prop == "hazards":
-            return random.choice(banks["hazards"])
+            return random.choice(banks.get("hazards", ["Unknown Hazard"]))
         elif prop == "output_material":
-            return random.choice(banks["material"])
+            return random.choice(banks.get("material", ["Unknown Material"]))
         elif prop == "outcome":
-            return random.choice(banks["outcome"])
+            return random.choice(banks.get("outcome", ["Unknown Outcome"]))
         elif prop == "secret_truth":
-            return random.choice(banks["secret_truth"])
+            return random.choice(banks.get("secret_truth", ["Unknown Truth"]))
         elif prop == "casualty_rate":
             return str(random.randint(500, 50000))
             

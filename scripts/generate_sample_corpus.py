@@ -35,7 +35,7 @@ def setup_logger(corpus_dir):
     logger.addHandler(fh)
     return logger
 
-async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger, theme, world_prompt):
+async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger, theme, world_prompt, structure_rule):
     node_name = G.nodes[node_id]['name']
     
     # Ensure processed directory exists
@@ -54,7 +54,7 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
     async with TEXT_SEMAPHORE:
         for attempt in range(3):
             try:
-                text = await compiler.compile_document(G, node_id, doc_type=doc_type, world_prompt=world_prompt)
+                text = await compiler.compile_document(G, node_id, doc_type=doc_type, world_prompt=world_prompt, structure_rule=structure_rule)
                 break
             except Exception as e:
                 if "429" in str(e) or "Too Many Requests" in str(e):
@@ -243,8 +243,8 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
         valid_image_indices = [i for i, ext in enumerate(formats) if ext != ".txt"]
         image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
         
-        def generate_dynamic_doc_type(node_data, theme):
-            bases = ["Log", "Report", "Ledger", "Manifest", "Journal", "Diary", "Contract", "Directive", "Notice", "Intercept", "Cache", "Record", "Transcript", "Missive", "Audit", "Blueprint Overview", "Maintenance Schedule", "Grievance", "Requisition Form", "Interrogation Transcript", "Prophecy", "Heretical Pamphlet", "Manifesto", "Smuggled Cipher"]
+        def generate_dynamic_doc_type(node_data, config):
+            bases = config.document_types
             faction = node_data.get("faction")
             role = node_data.get("role") or node_data.get("manager") or node_data.get("specialty")
             node_type = node_data.get("type", "")
@@ -260,7 +260,8 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
         for i, node_id in enumerate(target_nodes):
             manifest[node_id] = {
                 "ext": formats[i],
-                "doc_type": generate_dynamic_doc_type(G.nodes[node_id], theme),
+                "doc_type": generate_dynamic_doc_type(G.nodes[node_id], config),
+                "structure_rule": random.choice(config.document_structures),
                 "needs_image": (i in image_indices)
             }
             
@@ -285,7 +286,7 @@ async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane", world_pr
         tasks.append(asyncio.create_task(
             process_document(
                 llm_client, compiler, renderer, G, node_id, 
-                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger, theme, world_prompt
+                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger, theme, world_prompt, m_data.get("structure_rule", None)
             )
         ))
         
