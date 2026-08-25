@@ -17,7 +17,7 @@ async def ping_deployment(client: UnifiedAIClient, deployment_name: str, test_ty
             response = await client.inference_client.chat.completions.create(
                 model=deployment_name,
                 messages=[{"role": "user", "content": "Ping. Respond with 'Pong'."}],
-                max_tokens=10
+                max_completion_tokens=10
             )
             print(f"✅ Success! (Response: {response.choices[0].message.content.strip()})")
             

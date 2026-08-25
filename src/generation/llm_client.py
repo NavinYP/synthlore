@@ -1,6 +1,6 @@
 import asyncio
 from typing import List, Optional, Any
-from openai import AsyncAzureOpenAI
+from openai import AsyncAzureOpenAI, AsyncOpenAI
 from azure.ai.projects.aio import AIProjectClient
 from azure.identity.aio import DefaultAzureCredential
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -18,7 +18,7 @@ class UnifiedAIClient:
         self.limiter = AsyncLimiter(settings.requests_per_minute, 60)
         
         self.project_client: Optional[AIProjectClient] = None
-        self.inference_client: Optional[AsyncAzureOpenAI] = None
+        self.inference_client: Optional[Any] = None
 
     async def initialize(self):
         """Asynchronously initialize the clients based on available configuration."""
@@ -36,11 +36,15 @@ class UnifiedAIClient:
                 api_version=settings.api_version
             )
         else:
-            # Fallback to standard AsyncAzureOpenAI if using standalone keys
-            self.inference_client = AsyncAzureOpenAI(
+            # Check if using the Foundry /openai/v1 pattern
+            base_url = settings.azure_openai_endpoint.rstrip('/')
+            if not base_url.endswith("/openai/v1"):
+                base_url += "/openai/v1"
+                
+            self.inference_client = AsyncOpenAI(
                 api_key=settings.azure_openai_api_key,
-                api_version=settings.api_version,
-                azure_endpoint=settings.azure_openai_endpoint
+                base_url=base_url,
+                default_headers={"api-key": settings.azure_openai_api_key}
             )
 
     async def close(self):
