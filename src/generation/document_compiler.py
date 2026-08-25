@@ -34,11 +34,12 @@ class DocumentCompiler:
             
         return "\n".join(context_lines)
 
-    def _build_system_prompt(self) -> str:
+    def _build_system_prompt(self, doc_type: str) -> str:
         return (
             f"You are an automated archivist in a {self.config.setting_name} universe. "
             "Your job is to generate a highly immersive, aesthetically appropriate in-world document "
-            "(e.g., a technical manual, guild ledger, dispatcher log, or maintenance report). "
+            f"You must strictly format this text as a: {doc_type}. "
+            "The tone, structure, and prose should perfectly match this medium. "
             "CRITICAL RULES:\n"
             "1. NO REAL WORLD ENTITIES. Do not mention Earth, modern companies, real historical events, etc.\n"
             "2. STRICT FACTUAL ADHERENCE. The relationships and entities provided in the context are ABSOLUTE GROUND TRUTH. "
@@ -47,7 +48,7 @@ class DocumentCompiler:
             "3. FORMAT: Output the document as Markdown. Make it look like an authentic artifact."
         )
 
-    async def compile_document(self, graph: nx.DiGraph, node_id: str) -> str:
+    async def compile_document(self, graph: nx.DiGraph, node_id: str, doc_type: str = "Technical Manual") -> str:
         """
         Extracts context for a node and calls the LLM to generate the document.
         """
@@ -65,7 +66,7 @@ class DocumentCompiler:
         # Call the bulk lore generation endpoint (e.g., gpt-5.6-luna)
         document_text = await self.client.generate_lore(
             prompt=prompt,
-            system_prompt=self._build_system_prompt()
+            system_prompt=self._build_system_prompt(doc_type=doc_type)
         )
         
         return document_text

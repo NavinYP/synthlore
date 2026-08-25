@@ -14,6 +14,7 @@ class WorldConfig(BaseModel):
     edge_types: List[EdgeType] = Field(description="Allowed relationships between entities")
     start_year: int = Field(default=1800, description="Starting year for temporal metadata")
     end_year: int = Field(default=1900, description="Ending year for temporal metadata")
+    document_types: List[str] = Field(default_factory=lambda: ["Technical Manual", "Personal Letter", "Official Contract", "Maintenance Log", "Audit Report", "Blueprint Annotation"], description="Types of documents to generate")
     
     @classmethod
     def default_arcane_industrial(cls):
@@ -36,6 +37,7 @@ class WorldConfig(BaseModel):
                 EdgeType(name="BELONGS_TO", source_type="Automaton", target_type="Guild", description="Ownership"),
                 EdgeType(name="AUDITS", source_type="Overseer", target_type="Dispatch Hub", description="Inspection"),
             ],
+            document_types=["Guild Ledger", "Dispatcher Log", "Maintenance Report", "Smuggler's Diary", "Official Contract", "Letter of Grievance", "Procurement Order"],
             start_year=1840,
             end_year=1899
         )

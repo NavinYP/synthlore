@@ -30,3 +30,8 @@ We need to generate a 2,000-page synthetic corpus and corresponding ground-truth
 ## 5. Consequences
 *   **Positive:** Zero data leakage. High precision evaluation for RAG multi-hop capability. Highly reusable across different fictional universes.
 *   **Negative:** Requires strict schema enforcement before generation. LLM prompts must be highly constrained to avoid breaking the graph logic.
+
+
+## 4. Document Variety & Formatting (Phase 2 & 3)
+* **Decision:** We will inject varied document types (Contracts, Smuggler's Diaries, Letters of Grievance, Ledgers) dynamically into the LLM system prompt.
+* **Rationale:** A monolithic dataset of purely "Technical Manuals" limits the capabilities of RAG evaluation. By diversifying the mediums, we stress-test the RAG system's ability to extract graph facts from wildly different semantic structures and tones.
