@@ -24,12 +24,13 @@ By inverting the process—generating a mathematical graph *first*, and using th
 ## ✅ Phase 3: Visual Generation & Layouts (COMPLETED)
 **Goal:** Convert textual documents into visually "noisy" artifacts to test OCR, Vision Models, and Multimodal reasoning.
 **Tasks:**
-- Create `src/generation/visual_renderer.py` using `Pillow`.
-- Integrate `gpt-image-2` to dynamically generate blueprint assets based on Graph entities.
-- Programmatically composite the visual assets into the document layout.
-- Support multi-format exports (`.pdf`, `.png`, `.docx`, `.txt`).
-- Dynamically expand document canvas height to ensure embedded images are never truncated.
-- Add execution timing metrics to estimate final run duration.
+- [x] Create `src/generation/visual_renderer.py` using `Pillow`.
+- [x] Integrate `gpt-image-2` to dynamically generate blueprint assets based on Graph entities.
+- [x] Programmatically composite the visual assets into the document layout.
+- [x] Support multi-format exports (`.pdf`, `.png`, `.docx`, `.txt`).
+- [x] Dynamically expand document canvas height to ensure embedded images are never truncated.
+- [x] Implement asynchronous parallelization using `asyncio.gather` and Semaphores to bypass standard sequential API latency.
+- [x] Add execution timing metrics, `tqdm` progress bars, and file-based logging (`generation.log`).
 
 ### ⏱️ Performance Metrics & Final Run ETA
 Based on a controlled 10-document sample (`output/sample_corpus_20260826_011256`) using the optimized 10% distribution configuration:
