@@ -12,10 +12,21 @@ class AzureAISettings(BaseSettings):
         extra='ignore'
     )
     
-    # Azure AI Foundry Connection
+    # Azure AI Foundry Connection (Main Chat/Reasoning)
     project_connection_string: Optional[str] = None
     azure_openai_api_key: Optional[str] = None
     azure_openai_endpoint: Optional[str] = None
+    
+    # Specific Serverless Endpoints (Optional: Fallback to main endpoint if not provided)
+    embedding_endpoint: Optional[str] = None
+    embedding_api_key: Optional[str] = None
+    
+    image_endpoint: Optional[str] = None
+    image_api_key: Optional[str] = None
+    
+    rerank_endpoint: Optional[str] = None
+    rerank_api_key: Optional[str] = None
+    
     api_version: str = "2026-04-01-preview"
 
     # Model Deployment Mapping
