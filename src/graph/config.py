@@ -34,8 +34,8 @@ class WorldConfig:
     def default_arcane_industrial(cls):
         return cls(
             setting_name="Arcane Industrial",
-            tone="Grim, bureaucratic, soot-stained, bureaucratic intrigue.",
-            factions=["The Iron Guild", "Aether Syndicate", "Ministry of Compliance", "The Smugglers"],
+            tone="Grim, politically complex, steeped in betrayal, ancient grudges, and bureaucratic warfare. Factions vie for power over failing magical infrastructure, similar to the brutal political maneuvering of ASOIAF or Dune.",
+            factions=["The Iron Guild", "Aether Syndicate", "Ministry of Compliance", "The Smuggler Cartels", "The Sovereign House"],
             node_types=[
                 NodeType(name="Person", properties=["name", "role", "faction", "secret"]),
                 NodeType(name="Aether-Reactor", properties=["name", "capacity", "status", "location"]),
@@ -43,6 +43,7 @@ class WorldConfig:
                 NodeType(name="Guild", properties=["name", "specialty", "influence"]),
                 NodeType(name="Overseer", properties=["name", "clearance_level", "assigned_hub"]),
                 NodeType(name="Foundry", properties=["name", "output_material", "hazards"]),
+                NodeType(name="Historical Crisis", properties=["name", "casualty_rate", "outcome", "secret_truth"])
             ],
             edge_types=[
                 EdgeType(name="WORKS_AT", source_type="Person", target_type="Dispatch Hub", description="Employment"),
@@ -51,6 +52,9 @@ class WorldConfig:
                 EdgeType(name="BELONGS_TO", source_type="Person", target_type="Guild", description="Affiliation"),
                 EdgeType(name="SUPPLIES", source_type="Foundry", target_type="Dispatch Hub", description="Material flow"),
                 EdgeType(name="AUDITS", source_type="Overseer", target_type="Dispatch Hub", description="Inspection"),
+                EdgeType(name="ORCHESTRATED", source_type="Person", target_type="Historical Crisis", description="Secretly caused the event"),
+                EdgeType(name="DEVASTATED_BY", source_type="Dispatch Hub", target_type="Historical Crisis", description="Suffered during the event"),
+                EdgeType(name="PROFIT_FROM", source_type="Guild", target_type="Historical Crisis", description="Capitalized on the tragedy")
             ],
             document_types=["Guild Ledger", "Dispatcher Log", "Maintenance Report", "Smuggler's Diary", "Official Contract", "Letter of Grievance", "Procurement Order"],
             corpus_distribution=CorpusDistribution(
