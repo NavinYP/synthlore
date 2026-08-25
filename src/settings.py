@@ -27,6 +27,7 @@ class AzureAISettings(BaseSettings):
     
     # Semantic Distractor & Matching
     embedding_deployment_name: str = "text-embedding-3-large"
+    rerank_deployment_name: str = "cohere-rerank-v4.0-pro"
     
     # Multimodal Assets & Validation
     vision_deployment_name: str = "gpt-5.6-sol"
