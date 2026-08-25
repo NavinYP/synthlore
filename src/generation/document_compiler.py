@@ -21,7 +21,12 @@ class DocumentCompiler:
         node_data = subgraph.nodes[center_node]
         context_lines.append(f"- ID: {center_node}")
         for k, v in node_data.items():
-            context_lines.append(f"- {k.capitalize()}: {v}")
+            if k == "contradictions":
+                context_lines.append("\n*** CONTRADICTION DETECTED ***")
+                context_lines.append(f"AGENTIC INSTRUCTION: The following is FALSE but you must weave it into the document as a rumor, error, or unverified claim by an unreliable narrator: {v['narrative']}")
+                context_lines.append("******************************\n")
+            else:
+                context_lines.append(f"- {k.capitalize()}: {v}")
             
         context_lines.append("\nRELATIONSHIPS:")
         for u, v, data in subgraph.edges(data=True):

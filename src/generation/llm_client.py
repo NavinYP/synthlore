@@ -96,7 +96,6 @@ class UnifiedAIClient:
             response = await self.chat_client.chat.completions.create(
                 model=settings.bulk_lore_deployment_name,
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-                temperature=temperature,
                 max_completion_tokens=4000
             )
             return response.choices[0].message.content
@@ -107,8 +106,7 @@ class UnifiedAIClient:
             await self.initialize()
             response = await self.chat_client.chat.completions.create(
                 model=settings.reasoning_deployment_name,
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-                temperature=0.1
+                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
             )
             return response.choices[0].message.content
 

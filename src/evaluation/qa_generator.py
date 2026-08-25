@@ -22,7 +22,7 @@ class QAGenerator:
         
         if reqs.get("needs_image"):
             # Find a node that has needs_image == true
-            valid_nodes = [nid for nid, m in manifest.items() if m.get("needs_image")]
+            valid_nodes = [nid for nid, m in manifest.items() if isinstance(m, dict) and m.get("needs_image")]
             if not valid_nodes:
                 return {} # Fallback
             focal_node = random.choice(valid_nodes)
@@ -37,7 +37,10 @@ class QAGenerator:
             for u, v in edges:
                 for w in G.successors(v):
                     if u != w:
-                        valid_paths.append((u, v, w))
+                        # CRITICAL: Prevent leakage. Make sure there is no direct edge A -> C
+                        # and that the shortest path is exactly 2 hops.
+                        if nx.has_path(G, u, w) and nx.shortest_path_length(G, u, w) == 2:
+                            valid_paths.append((u, v, w))
             if not valid_paths:
                 return {}
                 

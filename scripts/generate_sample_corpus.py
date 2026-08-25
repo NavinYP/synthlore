@@ -24,9 +24,14 @@ TEXT_SEMAPHORE = asyncio.Semaphore(10)
 IMAGE_SEMAPHORE = asyncio.Semaphore(3)
 metrics = {"llm_text": [], "llm_image": [], "render": []}
 
-async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger):
+async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_type, corpus_dir, needs_image, logger, theme):
     node_name = G.nodes[node_id]['name']
-    out_path = os.path.join(corpus_dir, f"{node_name}{ext}")
+    
+    # Ensure processed directory exists
+    processed_dir = os.path.join(corpus_dir, "processed")
+    os.makedirs(processed_dir, exist_ok=True)
+    
+    out_path = os.path.join(processed_dir, f"{node_name}{ext}")
     
     # Resumption check
     if os.path.exists(out_path):
@@ -45,18 +50,18 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
                     logger.warning(f"[{node_name}] 429 Rate Limit on Text. Retrying (attempt {attempt+1})...")
                     await asyncio.sleep(2 ** attempt)
                 elif attempt == 2:
-                    logger.error(f"[{node_name}] Text Gen failed: {e}")
-                    raise e
-    
-    t_text = time.time() - t0
-    metrics["llm_text"].append(t_text)
-    logger.info(f"[{node_name}] Text Gen: {t_text:.2f}s")
-    
-    with open(os.path.join(corpus_dir, f"{node_name}_RAW.md"), "w") as f:
-        f.write(text)
-    with open(os.path.join(corpus_dir, f"{node_name}_CONTEXT.txt"), "w") as f:
-        f.write(compiler.extract_subgraph_context(G, node_id))
+                    logger.error(f"[{node_name}] Text failed after retries: {e}")
+                    return None
+                    
+        t_text = time.time() - t0
+        metrics["llm_text"].append(t_text)
         
+        # Save raw outputs to the main corpus_dir (not processed)
+        with open(os.path.join(corpus_dir, f"{node_name}_RAW.md"), "w") as f:
+            f.write(text)
+        with open(os.path.join(corpus_dir, f"{node_name}_CONTEXT.txt"), "w") as f:
+            f.write(compiler.extract_subgraph_context(G, node_id))
+            
     # Image Generation
     embedded_img_path = None
     if needs_image:
@@ -64,7 +69,43 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
         async with IMAGE_SEMAPHORE:
             for attempt in range(3):
                 try:
-                    img_prompt = f"A rough chalk sketch or technical blueprint of an Arcane Industrial entity named {node_name}. Monochromatic, highly detailed, parchment background."
+                    node_data = G.nodes[node_id]
+                    # Dynamically inject quantitative facts for Track 1A
+                    quant_facts = []
+                    for k, v in node_data.items():
+                        if isinstance(v, (int, float)) and k not in ["established"]:
+                            quant_facts.append(f"{k.upper()}: {v}")
+                            
+                    if quant_facts:
+                        fact_str = " | ".join(quant_facts)
+                        chart_type = random.choice(["bar chart", "line graph", "radar chart", "scatter plot dashboard"])
+                        
+                        theme_aesthetics = {
+                            "arcane": "sepia-toned, parchment, steampunk, brass and ink",
+                            "cyberpunk": "neon, holographic, high-contrast dark mode, glitch art",
+                            "space": "utilitarian, monochrome, CRT monitor glow, industrial"
+                        }
+                        aesthetic = theme_aesthetics.get(theme, "clean corporate")
+                        
+                        img_prompt = (
+                            f"A {aesthetic} {chart_type} representing operational data for '{node_name}'. "
+                            f"The following text MUST be explicitly and clearly written inside the chart: '{fact_str}'. "
+                            "Make the typography large, highly legible, and centered. The visual style must be deeply immersive to the theme."
+                        )
+                    else:
+                        blueprint_type = random.choice(["technical blueprint", "chalk sketch", "architectural schematic", "holographic cross-section"])
+                        theme_aesthetics = {
+                            "arcane": "da Vinci style, ink on old vellum, clockwork",
+                            "cyberpunk": "wireframe, glowing cyan and magenta, corporate espionage style",
+                            "space": "stark white lines on dark blue grid, military grade"
+                        }
+                        aesthetic = theme_aesthetics.get(theme, "standard engineering")
+                        
+                        img_prompt = (
+                            f"A {aesthetic} {blueprint_type} of a system component named '{node_name}'. "
+                            f"Include structural annotations and clear textual labels referencing the entity's name."
+                        )
+                        
                     response = await llm_client.image_client.images.generate(
                         model=settings.image_generation_deployment,
                         prompt=img_prompt,
@@ -109,7 +150,7 @@ async def process_document(llm_client, compiler, renderer, G, node_id, ext, doc_
     logger.info(f"[{node_name}] Rendered ({ext}): {t_render:.2f}s")
     return node_name
 
-async def generate_corpus(num_docs=20, resume_dir=None):
+async def generate_corpus(num_docs=20, resume_dir=None, theme="arcane"):
     print("="*60)
     print("🏭 SYNTHLORE PIPELINE: GENERATING FRESH SAMPLE CORPUS")
     print("="*60)
@@ -138,17 +179,29 @@ async def generate_corpus(num_docs=20, resume_dir=None):
         with open(manifest_path, "r") as f:
             manifest = json.load(f)
             
-        config = WorldConfig.default_arcane_industrial() # Base config for compiler
-        
+        theme = manifest.get("theme", "arcane")
+        if theme == "cyberpunk":
+            config = WorldConfig.default_cyberpunk_corporate()
+        elif theme == "space":
+            config = WorldConfig.default_deep_space_colony()
+        else:
+            config = WorldConfig.default_arcane_industrial()
+            
     else:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        corpus_dir = os.path.join(base_dir, "output", f"sample_corpus_{timestamp}")
+        corpus_dir = os.path.join(base_dir, "output", f"sample_{theme}_{timestamp}")
         os.makedirs(corpus_dir, exist_ok=True)
         
-        print(f"\n[Phase 1] Generating graph...")
-        config = WorldConfig.default_arcane_industrial()
+        print(f"\n[Phase 1] Generating graph (Theme: {theme})...")
+        if theme == "cyberpunk":
+            config = WorldConfig.default_cyberpunk_corporate()
+        elif theme == "space":
+            config = WorldConfig.default_deep_space_colony()
+        else:
+            config = WorldConfig.default_arcane_industrial()
+            
         generator = KnowledgeGraphGenerator(config)
-        G = generator.generate(num_nodes=30)
+        G = generator.generate(num_nodes=num_docs + 10)
         
         graph_path = os.path.join(corpus_dir, "ground_truth_graph.json")
         with open(graph_path, "w") as f:
@@ -169,7 +222,7 @@ async def generate_corpus(num_docs=20, resume_dir=None):
         image_indices = set(random.sample(valid_image_indices, min(num_with_image, len(valid_image_indices))))
         
         renderer = VisualRenderer()
-        manifest = {}
+        manifest = {"theme": theme} # Store theme in manifest for resumption
         for i, node_id in enumerate(target_nodes):
             manifest[node_id] = {
                 "ext": formats[i],
@@ -202,10 +255,12 @@ async def generate_corpus(num_docs=20, resume_dir=None):
     
     tasks = []
     for node_id, m_data in manifest.items():
+        if node_id == "theme":
+            continue
         tasks.append(asyncio.create_task(
             process_document(
                 llm_client, compiler, renderer, G, node_id, 
-                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger
+                m_data["ext"], m_data["doc_type"], corpus_dir, m_data["needs_image"], logger, theme
             )
         ))
         
@@ -236,6 +291,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate synthetic corporate lore corpus.")
     parser.add_argument("--num_docs", type=int, default=20, help="Number of documents to generate")
     parser.add_argument("--resume", type=str, default=None, help="Directory path of a previous run to resume")
+    parser.add_argument("--theme", type=str, choices=["arcane", "cyberpunk", "space"], default="arcane", help="Theme setting for the corpus")
     args = parser.parse_args()
     
-    asyncio.run(generate_corpus(num_docs=args.num_docs, resume_dir=args.resume))
+    asyncio.run(generate_corpus(num_docs=args.num_docs, resume_dir=args.resume, theme=args.theme))
