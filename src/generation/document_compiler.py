@@ -39,7 +39,7 @@ class DocumentCompiler:
             
         return "\n".join(context_lines)
 
-    def _build_system_prompt(self, doc_type: str, world_prompt: str = None) -> str:
+    def _build_system_prompt(self, doc_type: str, world_prompt: str = None, structure_rule: str = None) -> str:
         prompt = (
             f"You are an automated archivist in a {self.config.setting_name} universe. "
             "Your job is to generate a highly immersive, aesthetically appropriate in-world document.\n"
@@ -48,24 +48,13 @@ class DocumentCompiler:
         if world_prompt:
             prompt += f"\n### EXTENDED WORLD-BUILDING CONTEXT ###\n{world_prompt}\n\n"
             
-        # Add dynamic structural rules based on the document type
-        doc_lower = doc_type.lower()
-        structure_rules = ""
-        if any(k in doc_lower for k in ["transcript", "intercept", "interrogation"]):
-            structure_rules = "STRUCTURE: Format strictly as a raw dialogue transcript with SPEAKER labels and [BRACKETED] audio descriptions (e.g., [Static], [Sighs])."
-        elif any(k in doc_lower for k in ["diary", "journal", "cache", "scrawl"]):
-            structure_rules = "STRUCTURE: Format as a fragmented, deeply personal, and paranoid first-person narrative. Use erratic pacing."
-        elif any(k in doc_lower for k in ["pamphlet", "manifesto", "prophecy", "liturgy"]):
-            structure_rules = "STRUCTURE: Format as passionate, zealous, or heretical prose. Use rhetorical questions, capitalization for emphasis, and grand allegories."
-        elif any(k in doc_lower for k in ["missive", "letter", "grievance"]):
-            structure_rules = "STRUCTURE: Format as formal correspondence with a Salutation, Body, and Sign-off. Tone should be politically tense or aggressively bureaucratic."
-        elif any(k in doc_lower for k in ["ledger", "manifest", "schedule", "audit"]):
-            structure_rules = "STRUCTURE: Format primarily as a dry, clinical table or bulleted list of items, interspersed with terse, cold annotations."
-        else:
-            structure_rules = "STRUCTURE: Format as a standard corporate or military report with clear headings, status indicators, and executive summaries."
+        # Add dynamic structural rules based on the WorldConfig
+        if not structure_rule:
+            structure_rule = "Format as a standard corporate or military report with clear headings, status indicators, and executive summaries."
 
         prompt += (
-            f"You must strictly format this text as a: {doc_type}. {structure_rules}\n"
+            f"You must strictly format this text as a: {doc_type}. \n"
+            f"STRUCTURE OVERRIDE: {structure_rule}\n"
             "The tone, structure, and prose should perfectly match this medium. "
             "CRITICAL RULES:\n"
             "1. NO REAL WORLD ENTITIES. Do not mention Earth, modern companies, real historical events, etc.\n"
@@ -76,7 +65,7 @@ class DocumentCompiler:
         )
         return prompt
 
-    async def compile_document(self, graph: nx.DiGraph, node_id: str, doc_type: str = "Technical Manual", world_prompt: str = None) -> str:
+    async def compile_document(self, graph: nx.DiGraph, node_id: str, doc_type: str = "Technical Manual", world_prompt: str = None, structure_rule: str = None) -> str:
         """
         Extracts context for a node and calls the LLM to generate the document.
         """
@@ -94,7 +83,7 @@ class DocumentCompiler:
         # Call the bulk lore generation endpoint (e.g., gpt-5.6-luna)
         document_text = await self.client.generate_lore(
             prompt=prompt,
-            system_prompt=self._build_system_prompt(doc_type=doc_type, world_prompt=world_prompt)
+            system_prompt=self._build_system_prompt(doc_type=doc_type, world_prompt=world_prompt, structure_rule=structure_rule)
         )
         
         return document_text
