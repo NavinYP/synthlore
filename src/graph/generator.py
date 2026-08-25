@@ -28,7 +28,7 @@ class KnowledgeGraphGenerator:
             node_data = {
                 "type": entity_type,
                 "established": established_year,
-                "name": f"{entity_type}-{str(uuid.uuid4())[:8]}",
+                "name": self._generate_thematic_value("name", entity_type),
                 "active": random.choice([True, True, False])
             }
             
@@ -37,8 +37,10 @@ class KnowledgeGraphGenerator:
                 if prop not in node_data:
                     if prop in ["capacity", "throughput", "yield", "radiation", "debt", "bandwidth", "level"]:
                         node_data[prop] = random.randint(10, 999)
+                    elif prop == "faction":
+                        node_data[prop] = random.choice(self.config.factions)
                     else:
-                        node_data[prop] = f"UNKNOWN_{prop.upper()}"
+                        node_data[prop] = self._generate_thematic_value(prop, entity_type)
             
             self.graph.add_node(node_id, **node_data)
             nodes.append((node_id, entity_type))
@@ -67,7 +69,20 @@ class KnowledgeGraphGenerator:
                 if not target_candidates:
                     continue
                 
-                target_id = random.choice(target_candidates)
+                # World-Building Clustering Logic:
+                # 80% of the time, try to connect to a node in the SAME faction or region.
+                # 20% of the time, connect globally (spies, cross-faction trade, etc.)
+                source_data = self.graph.nodes[node_id]
+                local_candidates = [
+                    t for t in target_candidates 
+                    if self.graph.nodes[t].get("faction") == source_data.get("faction") 
+                    or self.graph.nodes[t].get("region") == source_data.get("region")
+                ]
+                
+                if local_candidates and random.random() < 0.8:
+                    target_id = random.choice(local_candidates)
+                else:
+                    target_id = random.choice(target_candidates)
                 
                 # Prevent self-loops
                 if target_id == node_id:
@@ -118,3 +133,45 @@ class KnowledgeGraphGenerator:
             "setting": self.config.setting_name,
             "is_directed": self.graph.is_directed()
         }
+
+    def _generate_thematic_value(self, prop: str, entity_type: str) -> str:
+        """Procedurally generates G.R.R. Martin-style deep lore attributes based on the property requested."""
+        theme = self.config.setting_name.lower()
+        
+        banks = {
+            "name_person": ["Silas", "Elara", "Kaelen", "Nyx", "Orion", "Jax", "Vex", "Cipher", "Thorne", "Valeria", "Darius", "Lysander", "Seraphina", "Rook", "Ghost"],
+            "name_facility": ["Core-A", "Station-9", "Void-Hub", "Iron-Spire", "Nexus-Prime", "The Crucible", "Blacksite Omega", "Echo-Base", "Sector 7G"],
+            "region": ["The Undercity", "Sector 4", "Outer Rim", "The Spire", "Sub-level 9", "The Wastes", "Neo-District", "Abyss-Trench", "The High Halls"],
+            "role": ["Enforcer", "Smuggler", "Alchemist", "Netrunner", "Engineer", "Arch-Duke", "Overseer", "Scrapper", "Inquisitor", "Fixer"],
+            "specialty": ["Void-tech", "Bio-engineering", "Dark Magic", "Cybernetics", "Contraband", "Heavy Artillery", "Espionage", "Quantum Cryptography"],
+            "clearance": ["Omega-Level", "Alpha-Priority", "Beta-Standard", "Level 1", "Level 5", "Black-Op", "Unregistered"],
+            "secret": ["Planning a coup", "Embezzling funds", "Working for a rival faction", "Hiding an AI fragment", "Infected with a parasite", "Seeking revenge"],
+            "contraband": ["Spice", "Red-Lyrium", "Cyber-stims", "Void-Cores", "Unlicensed Cyberware", "Stolen Blueprints", "Aether-dust"],
+            "hazards": ["Toxic Leak", "Radiation", "Warp-Anomaly", "Rogue AI", "Structural Collapse", "Bio-hazard", "Temporal Shift"],
+            "material": ["Adamantine", "Plasteel", "Aether-dust", "Dark-matter", "Promethium", "Synth-blood", "Carbon-nanotubes"]
+        }
+        
+        if prop == "name":
+            if entity_type in ["Person", "Operative", "Colonist", "Commander", "Executive", "Overseer"]:
+                return random.choice(banks["name_person"]) + f" {random.randint(1,99)}"
+            else:
+                return random.choice(banks["name_facility"]) + f" {random.randint(100,999)}"
+                
+        elif prop in ["region", "location", "sector"]:
+            return random.choice(banks["region"])
+        elif prop in ["role", "manager"]:
+            return random.choice(banks["role"])
+        elif prop == "specialty":
+            return random.choice(banks["specialty"])
+        elif prop in ["clearance", "clearance_level", "security_level"]:
+            return random.choice(banks["clearance"])
+        elif prop == "secret":
+            return random.choice(banks["secret"])
+        elif prop == "contraband":
+            return random.choice(banks["contraband"])
+        elif prop == "hazards":
+            return random.choice(banks["hazards"])
+        elif prop == "output_material":
+            return random.choice(banks["material"])
+            
+        return f"Unknown_{prop}"
