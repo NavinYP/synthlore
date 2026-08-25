@@ -20,19 +20,19 @@ class AzureAISettings(BaseSettings):
 
     # Model Deployment Mapping
     # Reasoning models for strict constraint following and zero-leakage logic
-    reasoning_deployment_name: str = "gpt-4o"  # or gpt-4.5 / gpt-5 
+    reasoning_deployment_name: str = "o3"
     
     # Bulk Lore Generation models with high token quotas
-    bulk_lore_deployment_name: str = "gpt-4o-mini"
+    bulk_lore_deployment_name: str = "gpt-5.6-luna"
     
     # Semantic Distractor & Matching
     embedding_deployment_name: str = "text-embedding-3-large"
     
     # Multimodal Assets & Validation
-    vision_deployment_name: str = "gpt-4o"
-    image_generation_deployment: str = "dall-e-3"
+    vision_deployment_name: str = "gpt-5.6-sol"
+    image_generation_deployment: str = "gpt-image-2"
 
     # Rate Limiting & Execution Config
-    requests_per_minute: int = 500
+    requests_per_minute: int = 100
 
 settings = AzureAISettings()
