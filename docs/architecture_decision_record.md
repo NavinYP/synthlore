@@ -35,3 +35,21 @@ We need to generate a 2,000-page synthetic corpus and corresponding ground-truth
 ## 4. Document Variety & Formatting (Phase 2 & 3)
 * **Decision:** We will inject varied document types (Contracts, Smuggler's Diaries, Letters of Grievance, Ledgers) dynamically into the LLM system prompt.
 * **Rationale:** A monolithic dataset of purely "Technical Manuals" limits the capabilities of RAG evaluation. By diversifying the mediums, we stress-test the RAG system's ability to extract graph facts from wildly different semantic structures and tones.
+
+## 5. Competition Corpus Decisions (Phase 7)
+
+### 5.1 Fact Placement over Ego-Graph Dumps
+* **Decision:** Documents are compiled from planner-assigned fact lists, never from the focal node's ego-graph.
+* **Rationale:** Ego-graph dumps let a single retrieved document (the bridge entity's page) answer "multi-hop" questions, invalidating track 1B. Placement is the only mechanism that can guarantee a question genuinely requires N retrievals.
+
+### 5.2 Programmatic Fact Visuals, Generative Atmosphere
+* **Decision:** Any visual that carries a ground-truth number is rendered with matplotlib; gpt-image-2 is used only for decorative franchise art (portraits, heraldry, landscapes) that carries no facts.
+* **Rationale:** Diffusion models garble digits; a 1A question keyed to a number "only in pixels" is only fair if those pixels are guaranteed correct. (This restores the original §4.3 decision, which the Phase 5/6 implementation had drifted away from.)
+
+### 5.3 Authority Tiers for Disputed Facts
+* **Decision:** Every disputed fact has its true value only in tier-1 canon (codex/annals), the false claim only in tier-3 ephemera, and a "contested" flag (no value) on the wiki.
+* **Rationale:** Track 1C requires corroborative, authority-weighing search. If truth and rumor share a document, one retrieval resolves the conflict and the track collapses.
+
+### 5.4 Public / Answer-Key Separation
+* **Decision:** The run directory is split into `public/` (documents, images, sample questions) and `answer_key/` (graph, placement matrix, benchmarks, reports). Only `public/` is ever distributed.
+* **Rationale:** The old layout mixed ground truth and corpus in one tree; a single packaging mistake would hand teams the solution.

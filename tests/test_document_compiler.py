@@ -4,7 +4,7 @@ from src.graph.config import WorldConfig
 from src.generation.document_compiler import DocumentCompiler
 
 class DummyLLMClient:
-    async def generate_lore(self, prompt: str, system_prompt: str, temperature: float) -> str:
+    async def generate_lore(self, prompt: str, system_prompt: str = "", temperature: float = 0.7, **kwargs) -> str:
         return "# Dummy Document\n\nGenerated text based on facts."
 
 @pytest.mark.asyncio

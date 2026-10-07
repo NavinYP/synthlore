@@ -2,8 +2,6 @@ import asyncio
 import httpx
 from typing import List, Optional, Any, Dict
 from openai import AsyncAzureOpenAI, AsyncOpenAI
-from azure.ai.projects.aio import AIProjectClient
-from azure.identity.aio import DefaultAzureCredential
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from aiolimiter import AsyncLimiter
 from src.settings import settings
@@ -17,7 +15,7 @@ class UnifiedAIClient:
     def __init__(self):
         self.limiter = AsyncLimiter(settings.requests_per_minute, 60)
         
-        self.project_client: Optional[AIProjectClient] = None
+        self.project_client: Optional[Any] = None
         self.chat_client: Optional[Any] = None
         self.embedding_client: Optional[Any] = None
         self.image_client: Optional[Any] = None
@@ -51,6 +49,10 @@ class UnifiedAIClient:
             return
 
         if settings.project_connection_string:
+            # Lazy imports: the Azure Foundry SDK is only needed for the
+            # connection-string auth path, not for endpoint+key or offline stages.
+            from azure.ai.projects.aio import AIProjectClient
+            from azure.identity.aio import DefaultAzureCredential
             credential = DefaultAzureCredential()
             self.project_client = AIProjectClient.from_connection_string(
                 credential=credential,
@@ -89,14 +91,46 @@ class UnifiedAIClient:
             if self.image_client and self.image_client != self.chat_client:
                 await self.image_client.close()
 
+    async def preflight(self):
+        """Fail fast on unusable credentials instead of retrying 401s for minutes.
+
+        Raises RuntimeError with an actionable message if configuration is
+        missing/placeholder or the endpoint rejects a minimal chat call.
+        """
+        key = settings.azure_openai_api_key or ""
+        if not settings.project_connection_string:
+            if not settings.azure_openai_endpoint:
+                raise RuntimeError("AZURE_OPENAI_ENDPOINT is not set in .env")
+            if not key or "your_api_key" in key.lower() or "your-" in key.lower():
+                raise RuntimeError(
+                    "AZURE_OPENAI_API_KEY in .env is missing or still the placeholder "
+                    "('your_api_key_here'). Paste the real key for the Foundry project "
+                    "and rerun."
+                )
+        await self.initialize()
+        try:
+            await self.chat_client.chat.completions.create(
+                model=settings.bulk_lore_deployment_name,
+                messages=[{"role": "user", "content": "Reply with the single word: pong"}],
+                max_completion_tokens=64,
+                timeout=30,
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Credential preflight failed against {settings.azure_openai_endpoint} "
+                f"(deployment '{settings.bulk_lore_deployment_name}'): {e}\n"
+                "Check AZURE_OPENAI_API_KEY / AZURE_OPENAI_ENDPOINT / deployment names in .env."
+            ) from e
+
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=20), reraise=True)
-    async def generate_lore(self, prompt: str, system_prompt: str = "You are a helpful assistant.", temperature: float = 0.7) -> str:
+    async def generate_lore(self, prompt: str, system_prompt: str = "You are a helpful assistant.", temperature: float = 0.7, max_completion_tokens: int = 4000) -> str:
         async with self.limiter:
             await self.initialize()
             response = await self.chat_client.chat.completions.create(
                 model=settings.bulk_lore_deployment_name,
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-                max_completion_tokens=4000
+                max_completion_tokens=max_completion_tokens,
+                timeout=240  # a stalled request should retry, not hang the pipeline
             )
             return response.choices[0].message.content
 
@@ -106,9 +140,27 @@ class UnifiedAIClient:
             await self.initialize()
             response = await self.chat_client.chat.completions.create(
                 model=settings.reasoning_deployment_name,
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
+                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
+                timeout=300
             )
             return response.choices[0].message.content
+
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
+    async def vision_check(self, image_b64: str, question: str) -> bool:
+        """Ask the vision model a strict YES/NO question about an image."""
+        async with self.limiter:
+            await self.initialize()
+            response = await self.chat_client.chat.completions.create(
+                model=settings.vision_deployment_name,
+                messages=[{"role": "user", "content": [
+                    {"type": "text", "text": question + " Answer strictly YES or NO."},
+                    {"type": "image_url",
+                     "image_url": {"url": f"data:image/png;base64,{image_b64}"}},
+                ]}],
+                max_completion_tokens=64,
+                timeout=120,
+            )
+            return (response.choices[0].message.content or "").strip().upper().startswith("YES")
 
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
     async def generate_embedding(self, text: str) -> List[float]:

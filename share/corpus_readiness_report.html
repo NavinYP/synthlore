@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ashen Era Corpus Readiness</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f7f3ea;
+    --surface: #fffdf7;
+    --ink: #26201a;
+    --muted: #6f6455;
+    --line: #ddd3c2;
+    --accent: #8c2f2f;
+    --accent-soft: #f0e2dc;
+    --pass: #2e6b46;
+    --pass-soft: #e2eee5;
+    --warn: #a05a1c;
+    --warn-soft: #f4e8d8;
+    --mono-bg: #efe9dc;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #191512; --surface: #211c17; --ink: #e9e2d4; --muted: #a89a86;
+      --line: #3a322a; --accent: #d98a7a; --accent-soft: #3a2723;
+      --pass: #7dbd97; --pass-soft: #24352b; --warn: #d9a05e; --warn-soft: #3a2f1f;
+      --mono-bg: #2a241d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #191512; --surface: #211c17; --ink: #e9e2d4; --muted: #a89a86;
+    --line: #3a322a; --accent: #d98a7a; --accent-soft: #3a2723;
+    --pass: #7dbd97; --pass-soft: #24352b; --warn: #d9a05e; --warn-soft: #3a2f1f;
+    --mono-bg: #2a241d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    font-size: 16.5px; line-height: 1.6; margin: 0; padding: 0 1.25rem 5rem;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { font-family: "Newsreader", Georgia, serif; text-wrap: balance; line-height: 1.15; }
+  h1 { font-size: 2.5rem; font-weight: 700; margin: 0 0 .4rem; }
+  h2 { font-size: 1.55rem; font-weight: 600; margin: 3rem 0 .8rem; padding-top: 1.6rem; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.6rem 0 .5rem; }
+  p { margin: .6rem 0 1rem; max-width: 68ch; }
+  .eyebrow {
+    font-size: .74rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 3.2rem 0 .3rem;
+  }
+  header .eyebrow { margin-top: 0; }
+  .verdict {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    background: var(--pass-soft); border: 1px solid var(--pass);
+    border-radius: 6px; padding: 1rem 1.25rem; margin: 1.4rem 0 0;
+  }
+  .verdict .go {
+    font-family: "Newsreader", Georgia, serif; font-weight: 700; font-size: 1.7rem;
+    color: var(--pass); letter-spacing: .02em;
+  }
+  .verdict p { margin: 0; font-size: .95rem; }
+  .meta { color: var(--muted); font-size: .92rem; margin-top: .5rem; }
+  code, .mono {
+    font-family: "IBM Plex Mono", Consolas, monospace; font-size: .82em;
+    background: var(--mono-bg); border-radius: 3px; padding: .08em .35em;
+  }
+  .tablewrap { overflow-x: auto; margin: 1rem 0 1.5rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th {
+    text-align: left; font-size: .74rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; padding: .45rem .7rem; border-bottom: 2px solid var(--line);
+  }
+  td { padding: .5rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .pill {
+    display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+    padding: .12rem .55rem; border-radius: 999px; text-transform: uppercase; white-space: nowrap;
+  }
+  .pill.pass { background: var(--pass-soft); color: var(--pass); border: 1px solid var(--pass); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1rem 1.25rem; margin: 1rem 0;
+  }
+  .card h3 { margin-top: 0; }
+  .qa { border-left: 3px solid var(--accent); padding: .2rem 0 .2rem 1rem; margin: .9rem 0; }
+  .qa .q { font-weight: 600; }
+  .qa .a { color: var(--muted); font-size: .93rem; }
+  ul { padding-left: 1.3rem; max-width: 70ch; }
+  li { margin: .35rem 0; }
+  .gapnum {
+    font-family: "IBM Plex Mono", monospace; color: var(--accent); font-weight: 500;
+    margin-right: .4rem; font-size: .85em;
+  }
+  .footer { color: var(--muted); font-size: .85rem; margin-top: 3.5rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<main>
+<header>
+  <p class="eyebrow">SyntheticLore-Bench · RAG Benchmark Evaluation · Official Corpus Pipeline</p>
+  <h1>Ashen Era Corpus Readiness</h1>
+  <p class="meta">Evidence from the validated pilot run <code>competition_20260826_051725</code> · SyntheticLore-Bench pipeline · 26 August 2026</p>
+  <div class="verdict">
+    <span class="go">GO</span>
+    <p>The pipeline produces a benchmark-valid corpus: <strong>10/10 validation checks pass</strong>, 13/13 invariant tests pass, and 23 verified questions ship across all three sub-tracks. Remaining gaps are listed at the end — none block the full generation run, two should be closed before the competition launches.</p>
+  </div>
+</header>
+
+<h2>1 · What the pilot proved</h2>
+<p>The pilot is a complete end-to-end run at reduced scale: a 34-entity world, 75 documents (~34,300 words), 25 AI-generated images, 6 programmatic fact plates, and a generated + verified Q&amp;A benchmark. Every mechanism the full corpus depends on ran for real — same code paths, same models, same packaging.</p>
+
+<h3>Validation gate — <code>scripts/validate_corpus.py</code></h3>
+<p>The gate independently re-checks the benchmark-critical invariants against the <em>generated text</em>, not the plan. It must print GO before any corpus is distributed.</p>
+<div class="tablewrap"><table>
+  <tr><th>Check</th><th>What it guarantees</th><th>Pilot result</th></tr>
+  <tr><td>A1 · Visual-only isolation</td><td>Numbers keyed to track-1A plate questions appear in no text document</td><td><span class="pill pass">Pass</span> 6/6 values isolated</td></tr>
+  <tr><td>A2 · Figure plates present</td><td>Every plate file exists; its host document shipped</td><td><span class="pill pass">Pass</span> 6/6</td></tr>
+  <tr><td>A3 · Visual attributes isolated</td><td>Answers to image-attribute questions exist only in pixels</td><td><span class="pill pass">Pass</span> 5 shipped, 0 leaks</td></tr>
+  <tr><td>B1 · Chain hops never co-located</td><td>No single document contains both hops of a 1B question</td><td><span class="pill pass">Pass</span> 8/8 chains split</td></tr>
+  <tr><td>B2 · Both hops expressed</td><td>Each hop genuinely appears in its assigned documents</td><td><span class="pill pass">Pass</span></td></tr>
+  <tr><td>C1 · False claims planted</td><td>Every 1C distractor exists in low-authority ephemera</td><td><span class="pill pass">Pass</span> 4/4</td></tr>
+  <tr><td>C2 · Truth only in canon</td><td>The true value of a disputed fact exists only in the tier-1 codex</td><td><span class="pill pass">Pass</span></td></tr>
+  <tr><td>Q1 · Benchmark coverage</td><td>All three tracks populated; low rejection rate</td><td><span class="pill pass">Pass</span> 23 shipped, 1 rejected</td></tr>
+  <tr><td>E1 · Evidence resolves</td><td>Every question's evidence paths exist in the distributable <code>public/</code></td><td><span class="pill pass">Pass</span> 23/23</td></tr>
+  <tr><td>V1 · Fact-miss rate</td><td>Documents express their assigned facts (&le;5% tolerance)</td><td><span class="pill pass">Pass</span> 2/75 docs</td></tr>
+</table></div>
+
+<h2>2 · Per-track evidence</h2>
+
+<h3>Track 1A — Rich answers (multimodal)</h3>
+<p>Two question sources, both with guaranteed-correct pixels. <strong>Fact plates</strong> are rendered programmatically (matplotlib), so numbers are exact — never trusted to a diffusion model. <strong>Visual attributes</strong> are concrete details forced into image prompts, then confirmed by the vision model (<code>gpt-5.6-sol</code>) before a question may exist; 6 of 9 verified in the pilot, and unverified images simply stay decorative.</p>
+<div class="qa"><div class="q">“According to the figure plate depicting Ironfell Citadel’s military muster, how many troops are recorded in its garrison?” → <code>1096</code></div>
+<div class="a">The value 1096 exists only in <code>plate_04.png</code>, embedded in the Gazetteer codex. Gate check A1 confirms it appears in none of the 75 text documents.</div></div>
+<div class="qa"><div class="q">“What is the central emblem on the banner of The Silent Choir?” → <code>coiled serpent</code></div>
+<div class="a">Injected into the gpt-image-2 prompt, vision-verified present, and confirmed absent from all text (check A3). Visually inspected: the serpent is unmistakable.</div></div>
+
+<h3>Track 1B — Multi-hop across documents</h3>
+<p>The fact-placement planner assigns each hop of a protected chain to <em>disjoint document sets</em> — the property that makes a multi-hop question honest. Sample placements from the pilot answer key:</p>
+<div class="tablewrap"><table>
+  <tr><th>Chain (bridge hidden from the question)</th><th>Hop 1 lives in</th><th>Hop 2 lives in</th></tr>
+  <tr><td>Caedmon Crowhurst → [Chalice of Endless Vigil] → Gloammarch</td><td><code>caedmon registry, caedmon wiki</code></td><td><code>chronicle v1c1, armory codex, chalice wiki</code></td></tr>
+  <tr><td>Vault Chitin → [Gloamreach] → Iron-Ring Cartel</td><td><code>bestiary codex, creature wiki</code></td><td><code>gazetteer codex, location wiki</code></td></tr>
+  <tr><td>Sabelle Ashgrove → [Vharenford] → Ashen Vanguard</td><td><code>registry, vharenford wiki</code></td><td><code>gazetteer codex</code></td></tr>
+</table></div>
+<p>Checks B1/B2 verify this against the final text for all 8 pilot chains: no document contains both hops, and both hops are genuinely expressed. This closes the classic failure where the bridge entity’s own wiki page answers the “multi-hop” question in one retrieval.</p>
+
+<h3>Track 1C — Agentic, conflicting sources</h3>
+<p>Every disputed fact has an authority hierarchy enforced by placement: the true value only in the tier-1 codex, confident false claims only in tier-3 ephemera, and the wiki flags the dispute without resolving it. A naive single-document lookup plausibly lands on the false value; a corroborating search finds and weighs the canon source.</p>
+<div class="tablewrap"><table>
+  <tr><th>Disputed fact</th><th>Canon (tier 1)</th><th>False claims (tier 3)</th></tr>
+  <tr><td>Ironfell Citadel founded — true <strong>320 AS</strong>, false 360</td><td><code>gazetteer codex</code></td><td><code>ephemera 003, 008</code></td></tr>
+  <tr><td>Gloamreach founded — true <strong>246 AS</strong>, false 269</td><td><code>gazetteer codex</code></td><td><code>ephemera 005, 002</code></td></tr>
+  <tr><td>Reliquary of Cindergate forged — true <strong>114 AS</strong>, false 83</td><td><code>armory codex</code></td><td><code>ephemera 008, 000</code></td></tr>
+  <tr><td>Vharencrag Fortress founded — true <strong>84 AS</strong>, false 124</td><td><code>gazetteer codex</code></td><td><code>ephemera 008, 004</code></td></tr>
+</table></div>
+
+<h2>3 · The safety nets have caught real bugs</h2>
+<p>The strongest evidence of readiness is not that the checks pass — it is that during the pilot cycle each verification layer caught a genuine validity bug that would otherwise have shipped silently:</p>
+<div class="tablewrap"><table>
+  <tr><th>Bug</th><th>Would have broken</th><th>Caught by</th><th>Status</th></tr>
+  <tr><td>Lore-bible dossiers carried visual-only numbers into every prompt (“its garrison numbers 2148” in chapter prose)</td><td>Track 1A (5/6 questions invalid)</td><td>Benchmark leak scan</td><td><span class="pill pass">Fixed</span></td></tr>
+  <tr><td>Disputed forged-year re-entered the wiki via the <code>FORGED_AT</code> edge’s year attribute</td><td>Track 1C authority isolation</td><td>Gate check C2</td><td><span class="pill pass">Fixed</span> + regression test</td></tr>
+  <tr><td>o3 phrased 1C questions as “according to the ballad…”, making the false value technically correct</td><td>Track 1C answer keys</td><td>Manual question review</td><td><span class="pill pass">Fixed</span> + phrasing guard</td></tr>
+  <tr><td>Visual attribute “skull” collided with grimdark chapter prose</td><td>One 1A question</td><td>Benchmark leak scan (auto-rejected)</td><td><span class="pill pass">Worked as designed</span></td></tr>
+</table></div>
+
+<h2>4 · Engineering evidence</h2>
+<ul>
+  <li><strong>13/13 invariant tests pass</strong> (<code>tests/test_competition_pipeline.py</code>): unique names, temporal sanity (nobody fights before birth, artifacts wielded after forging), chain splitting, visual-only exclusion, dispute tiers, full fact coverage, renderer pagination, attribute well-formedness.</li>
+  <li><strong>Deterministic and resumable</strong>: seeded generation; every stage caches to disk; interrupted runs continue with <code>--run_dir</code>. Credential preflight aborts a misconfigured run in ~2 seconds.</li>
+  <li><strong>Leak-proof packaging</strong>: <code>public/</code> (documents, images, answer-free <code>sample_questions.json</code>) is strictly separated from <code>answer_key/</code> (world graph, placement matrix, dev/eval benchmarks with answers, verification reports). Gate check E1 confirms every evidence path resolves inside <code>public/</code> alone.</li>
+  <li><strong>Dev/eval split</strong> is stratified per track (30% dev by default); releasing answers later requires no rework, since answers live in a separate file.</li>
+  <li><strong>Question answers are composed from ground truth</strong>, not by an LLM — the reasoning model only phrases the question; the graph supplies the answer and the placement matrix supplies provenance.</li>
+</ul>
+
+<h2>5 · Scale projection</h2>
+<div class="tablewrap"><table>
+  <tr><th></th><th>Pilot (validated)</th><th>Full run (default)</th></tr>
+  <tr><td>Entities</td><td class="num">34</td><td class="num">110</td></tr>
+  <tr><td>Documents</td><td class="num">75</td><td class="num">~410 (60 chapters · ~90 wiki · 3 codexes · 150 ephemera)</td></tr>
+  <tr><td>Words / pages</td><td class="num">34.3k / ~85</td><td class="num">~450k / ~1,100</td></tr>
+  <tr><td>Images</td><td class="num">25 + 6 plates</td><td class="num">~75 + 15 plates</td></tr>
+  <tr><td>Questions (verified)</td><td class="num">23</td><td class="num">~55–65</td></tr>
+  <tr><td>Est. wall-clock</td><td class="num">~12 min</td><td class="num">~45–75 min</td></tr>
+</table></div>
+
+<h2>6 · Remaining gaps</h2>
+<p>None of these block generating the full corpus. Gaps 1–2 should be closed before the competition launches; the rest are judgment calls.</p>
+<ul>
+  <li><span class="gapnum">G1</span><strong>No difficulty calibration yet.</strong> The strongest missing evidence: a baseline RAG system (naive embed-and-retrieve, models already configured in <code>.env</code>) should be run against the corpus. If naive top-k answers most 1B/1C questions, chains and disputes need hardening; if nothing can answer them, they’re unfair. Recommended before launch.</li>
+  <li><span class="gapnum">G2</span><strong>No scoring harness for submissions.</strong> The benchmark provides questions, answers, aliases, and provenance — but the judging protocol (exact match vs. LLM-judged, partial credit for evidence citation) is not built. Decide and script it before evaluation week.</li>
+  <li><span class="gapnum">G3</span><strong>Full-scale run not yet validated.</strong> All evidence above is pilot-scale. The gate and tests run identically at full scale, but rate-limit behavior and the fact-miss rate at ~410 documents are unverified until the run happens. The gate is the backstop.</li>
+  <li><span class="gapnum">G4</span><strong>Page count vs. challenge wording.</strong> The challenge document says “thousands of pages”; defaults produce ~1,100. Scaling knobs exist (<code>--volumes</code>, <code>--chapters</code>, <code>--ephemera</code>, entity counts) if ~2,000+ pages is wanted; cost scales linearly.</li>
+  <li><span class="gapnum">G5</span><strong>Question volume.</strong> ~55–65 verified questions at full scale. Sufficient for judging; raise <code>protected_chains</code>, <code>visual_only_facts</code>, and <code>disputes</code> in the planner scale if a larger held-out set is preferred.</li>
+  <li><span class="gapnum">G6</span><strong>Human read-through.</strong> Prose spot checks were strong (atmospheric, in-world, consistent), but a full-corpus skim of 2–3 chapters, wiki pages, and one codex per book is a pre-release step no automation replaces.</li>
+</ul>
+
+<h2>7 · Launch checklist</h2>
+<ul>
+  <li>Run <code>python scripts/generate_competition_corpus.py --stages all</code> (own terminal; resumable).</li>
+  <li>Run <code>python scripts/validate_corpus.py --run_dir output/competition_&lt;ts&gt;</code> — require <strong>GO</strong>.</li>
+  <li>Close G1: baseline RAG calibration run; adjust and regenerate if needed.</li>
+  <li>Close G2: decide grading protocol; script the scoring harness against <code>answer_key/benchmark_eval.json</code>.</li>
+  <li>Human skim (G6). Then distribute <code>public/</code> only.</li>
+</ul>
+
+<p class="footer">SyntheticLore-Bench · graph-first synthetic corpus generator · pilot run competition_20260826_051725 · all checks reproducible from the run directory’s <code>answer_key/</code>.</p>
+</main>
+
+</body>
+</html>
