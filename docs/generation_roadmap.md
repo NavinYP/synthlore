@@ -46,7 +46,7 @@ Based on a controlled 10-document sample (`output/sample_corpus_20260826_011256`
 ## ✅ Phase 4: Benchmark Extraction & Q&A Generation (COMPLETED)
 **Goal:** Generate the rigorous evaluation questions the final RAG agents will face.
 **Tasks:**
-- [x] Implemented `o3` evaluation configs mapping to SLIIT Codefest tracks (Multimodal, Multi-hop, Agentic RAG).
+- [x] Implemented `o3` evaluation configs mapping to the three core evaluation tracks (Multimodal, Multi-hop, Agentic RAG).
 - [x] Enforced strict validation (`nx.has_path` and `nx.shortest_path_length == 2`) to eliminate unintended direct edge leakage (A -> C) ensuring true Multi-hop challenges.
 - [x] Generated `benchmark_qa.json` paired tightly with each sample set run.
 
@@ -68,3 +68,17 @@ Based on a controlled 10-document sample (`output/sample_corpus_20260826_011256`
 - [x] **Theme-Agnostic Abstraction**: Decoupled all hardcoded naming banks and structures from the generators and moved them strictly into `WorldConfig`. The entire ecosystem can dynamically shift between Cyberpunk, Grim Fantasy, or Deep Space effortlessly.
 
 **All systems are now operational. The pipeline successfully executes highly-concurrent batches of complex, graph-backed synthetic corpora in under 2 minutes for small scale tests.**
+
+## ✅ Phase 7: Competition Corpus Redesign (COMPLETED)
+**Goal:** Turn the generator into a benchmark-valid official evaluation corpus, fixing the validity gaps of the document-per-node model.
+**Key changes (new code paths; Phases 1-6 modules remain for reference):**
+- [x] **WorldBuilder** (`src/world/`): unique names, coherent per-type schemas, a conflict timeline with belligerents/participants/sites, temporal sanity (nobody fights before birth), and explicit disputed facts.
+- [x] **CorpusPlanner** (`src/planning/corpus_planner.py`): a fact-placement matrix assigning every ground-truth fact to specific documents, with hard constraints per track — visual-only facts (1A) never appear in text; protected 2-hop chains (1B) never co-occur in one document; disputed truths (1C) live only in tier-1 canon while false claims live only in tier-3 ephemera. `validate()` proves the constraints hold.
+- [x] **Long-form compilers** (`src/generation/compilers.py`): multi-call novel chapters with continuity, wiki articles with infoboxes and cross-links, table-heavy codex entries, unreliable-narrator ephemera. Contexts are the assigned fact lists, never ego-graphs. Post-generation verification with one repair pass.
+- [x] **Split visual system**: fact-bearing plates are programmatic (`fact_visuals.py`, matplotlib — numbers pixel-perfect); atmospheric art is gpt-image-2 (`atmo_visuals.py`) and carries no ground-truth values.
+- [x] **Paginating renderer** (`renderer_v2.py`): multi-page PDF (reportlab), DOCX, simulated-scan PDFs; Windows-safe fonts; no truncation.
+- [x] **Verified benchmark** (`src/evaluation/benchmark.py`): questions derived from the protected structures, answers composed from ground truth, verified against the actual corpus text, split into a releasable dev set and a held-out eval set with provenance to public file paths.
+- [x] **Packaging**: `public/` (distributable corpus + sample_questions.json) strictly separated from `answer_key/` (graph, plan, benchmarks, reports).
+
+**Orchestrator:** `scripts/generate_competition_corpus.py` (stages: plan, bible, text, figures, images, package, benchmark; all resumable).
+**Invariant tests:** `tests/test_competition_pipeline.py`.

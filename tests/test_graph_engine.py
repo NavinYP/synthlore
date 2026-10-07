@@ -1,28 +1,37 @@
 import pytest
 import networkx as nx
-from src.graph.config import WorldConfig, EdgeType
+from src.graph.config import WorldConfig, NodeType, EdgeType, CorpusDistribution
 from src.graph.generator import KnowledgeGraphGenerator
 
 @pytest.fixture
 def test_config():
     return WorldConfig(
         setting_name="Test World",
-        entity_types=["A", "B"],
-        edge_types=[
-            EdgeType(name="CONNECTS_TO", source_type="A", target_type="B")
+        tone="Test Tone",
+        factions=["Faction-1", "Faction-2"],
+        node_types=[
+            NodeType(name="A", properties=["name", "role"]),
+            NodeType(name="B", properties=["name", "status"]),
         ],
+        edge_types=[
+            EdgeType(name="CONNECTS_TO", source_type="A", target_type="B", description="Connects A to B")
+        ],
+        document_types=["Technical Manual"],
+        document_structures=["Standard structure"],
+        naming_banks={"A": ["Alpha", "Beta"], "B": ["Gamma", "Delta"]},
+        corpus_distribution=CorpusDistribution(image_injection_ratio=0.0, format_ratios={"markdown": 1.0}),
         start_year=2000,
         end_year=2020
     )
 
 def test_config_initialization(test_config):
     assert test_config.setting_name == "Test World"
-    assert "A" in test_config.entity_types
+    assert any(nt.name == "A" for nt in test_config.node_types)
 
 def test_default_arcane_config():
     config = WorldConfig.default_arcane_industrial()
     assert config.setting_name == "Arcane Industrial"
-    assert len(config.entity_types) >= 5
+    assert len(config.node_types) >= 5
 
 def test_graph_generation(test_config):
     generator = KnowledgeGraphGenerator(test_config)

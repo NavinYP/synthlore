@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ashen Era, Mapped</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Deliberate single-theme design: a dark ley-chart. All colors explicit. */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #14100d; color: #e8e0d0;
+         font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+         font-size: 15.5px; line-height: 1.55; }
+  header { max-width: 1180px; margin: 0 auto; padding: 2.2rem 1.5rem 0; }
+  h1 { font-family: "Newsreader", Georgia, serif; font-weight: 700; font-size: 2.3rem;
+       margin: 0 0 .3rem; color: #f0e8d6; text-wrap: balance; }
+  h2 { font-family: "Newsreader", Georgia, serif; font-weight: 700; font-size: 1.6rem;
+       color: #f0e8d6; margin: 2.2rem 0 .6rem; text-wrap: balance; }
+  h3 { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 1.18rem;
+       color: #e8ddc4; margin: 1.6rem 0 .4rem; }
+  .sub { color: #a39682; max-width: 72ch; margin: 0; }
+  .lede { color: #c9bda7; max-width: 76ch; }
+  .statline { font-family: "IBM Plex Mono", monospace; font-size: .78rem; color: #8c7f6c;
+              letter-spacing: .06em; margin-top: .7rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+  nav { position: sticky; top: 0; z-index: 5; background: rgba(20, 16, 13, .96);
+        border-bottom: 1px solid #2e2720; margin: 1.2rem -1.5rem 0; padding: .5rem 1.5rem;
+        display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tabbtn { background: #1d1813; border: 1px solid #3a322a; color: #d8cfbc; cursor: pointer;
+            font-family: "IBM Plex Mono", monospace; font-size: .76rem; letter-spacing: .04em;
+            border-radius: 999px; padding: .3rem .85rem; }
+  .tabbtn[aria-selected="true"] { background: #3a2723; border-color: #d98a7a; color: #f0e8d6; }
+  .tabbtn:focus-visible { outline: 2px solid #b58cd9; outline-offset: 2px; }
+  .tabsec { display: none; }
+  .tabsec.active { display: block; }
+  p { max-width: 76ch; }
+  .statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+              gap: .6rem; margin: 1.2rem 0; }
+  .statgrid div { background: #1d1813; border: 1px solid #2e2720; border-radius: 6px;
+                  padding: .7rem .9rem; }
+  .statgrid b { display: block; font-family: "Newsreader", Georgia, serif; font-size: 1.7rem;
+                color: #d4a94e; font-variant-numeric: tabular-nums; }
+  .statgrid span { font-size: .78rem; color: #a39682; }
+  .card { display: flex; gap: 1.1rem; background: #1a1510; border: 1px solid #2e2720;
+          border-radius: 8px; padding: 1rem; margin: .9rem 0; }
+  .card .thumb { width: 190px; height: 190px; object-fit: cover; border-radius: 5px;
+                 border: 1px solid #3a322a; flex: none; }
+  .card.small .thumb { width: 130px; height: 130px; }
+  .placeholder { display: flex; align-items: center; justify-content: center; text-align: center;
+                 background: #211a13; color: #6f6455; font-family: "IBM Plex Mono", monospace;
+                 font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+  .cardbody { min-width: 0; }
+  .cardbody h3 { margin: .1rem 0 .2rem; }
+  .tag { font-family: "IBM Plex Mono", monospace; font-size: .72rem; color: #d4a94e;
+         letter-spacing: .05em; margin: 0 0 .5rem; }
+  .dossier { color: #cfc3ac; font-size: .93rem; margin: .3rem 0; }
+  .meta { color: #8c7f6c; font-size: .84rem; margin: .4rem 0 0; }
+  .tablewrap { overflow-x: auto; margin: .8rem 0 1.4rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .89rem; }
+  th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+       letter-spacing: .1em; text-transform: uppercase; color: #8c7f6c;
+       padding: .4rem .7rem; border-bottom: 2px solid #3a322a; }
+  td { padding: .45rem .7rem; border-bottom: 1px solid #2e2720; vertical-align: top; }
+  td.true { color: #7dbd97; font-variant-numeric: tabular-nums; }
+  td.false { color: #d98a7a; font-variant-numeric: tabular-nums; }
+  .warnpill { display: inline-block; vertical-align: middle; font-family: "IBM Plex Mono", monospace;
+              font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: #d98a7a;
+              border: 1px solid #d98a7a; border-radius: 999px; padding: .12rem .6rem; margin-left: .5rem; }
+  .passpill, .failpill { display: inline-block; vertical-align: middle; font-family: "IBM Plex Mono", monospace;
+              font-size: .66rem; letter-spacing: .12em; border-radius: 999px; padding: .12rem .6rem; }
+  .passpill { color: #7dbd97; border: 1px solid #7dbd97; }
+  .failpill { color: #d98a7a; border: 1px solid #d98a7a; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: .82em; background: #241d16;
+         border-radius: 3px; padding: .08em .35em; }
+  /* atlas */
+  .controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 .7rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer;
+          font-family: "IBM Plex Mono", monospace; font-size: .74rem; border: 1px solid #3a322a;
+          border-radius: 999px; padding: .18rem .65rem; background: #1d1813; color: #d8cfbc; user-select: none; }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .chip.off { opacity: .35; }
+  #search { background: #1d1813; border: 1px solid #3a322a; color: #e8e0d0; border-radius: 4px;
+            font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: .3rem .6rem; width: 220px; }
+  #search:focus { outline: 2px solid #b58cd9; outline-offset: 1px; }
+  .stage { position: relative; border: 1px solid #2e2720; border-radius: 8px;
+           background: radial-gradient(ellipse at 50% 40%, #1a1510 0%, #120e0b 75%); overflow: hidden; }
+  canvas { display: block; width: 100%; height: 660px; cursor: grab; }
+  #panel { position: absolute; top: 12px; right: 12px; width: 300px; max-height: calc(100% - 24px);
+           overflow-y: auto; background: rgba(24, 19, 14, .96); border: 1px solid #4a3f33;
+           border-radius: 6px; padding: .9rem 1rem; display: none; }
+  #panel h2 { font-size: 1.2rem; margin: 0 0 .1rem; }
+  #panel .kind { font-family: "IBM Plex Mono", monospace; font-size: .7rem; letter-spacing: .1em;
+                 text-transform: uppercase; margin-bottom: .6rem; }
+  #panel dl { margin: 0 0 .7rem; font-size: .85rem; }
+  #panel dt { color: #8c7f6c; font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+              text-transform: uppercase; letter-spacing: .08em; margin-top: .45rem; }
+  #panel dd { margin: 0; }
+  #panel .rel { font-size: .83rem; padding: .18rem 0; border-top: 1px solid #2e2720; }
+  #panel .rel b { cursor: pointer; }
+  #panel .rel b:hover { text-decoration: underline; }
+  #panel .rname { font-family: "IBM Plex Mono", monospace; font-size: .68rem; color: #8c7f6c; }
+  #panel .close { position: absolute; top: 6px; right: 10px; background: none; border: none;
+                  color: #8c7f6c; font-size: 1.1rem; cursor: pointer; }
+  .hint { color: #8c7f6c; font-size: .8rem; font-family: "IBM Plex Mono", monospace; margin-top: .55rem; }
+  @media (max-width: 640px) { .card { flex-direction: column; } .card .thumb { width: 100%; height: 200px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Ashen Era, Mapped</h1>
+  <p class="sub">The organizer's companion to the competition corpus: the world, its powers and people, the layer built to be hard, and the knowledge graph everything is rendered from.</p>
+  <p class="statline">110 entities / 251 relations / era 212-468 AS / run competition_20260826_060502</p>
+</header>
+
+<div class="wrap">
+  <nav role="tablist" aria-label="Sections">
+    <button class="tabbtn" role="tab" data-tab="world" aria-selected="true">the world</button>
+    <button class="tabbtn" role="tab" data-tab="factions" aria-selected="false">factions</button>
+    <button class="tabbtn" role="tab" data-tab="conflicts" aria-selected="false">conflicts</button>
+    <button class="tabbtn" role="tab" data-tab="characters" aria-selected="false">characters</button>
+    <button class="tabbtn" role="tab" data-tab="relics" aria-selected="false">relics &amp; beasts</button>
+    <button class="tabbtn" role="tab" data-tab="hidden" aria-selected="false">hidden layer</button>
+    <button class="tabbtn" role="tab" data-tab="validation" aria-selected="false">validation</button>
+    <button class="tabbtn" role="tab" data-tab="atlas" aria-selected="false">atlas</button>
+  </nav>
+
+  <section class="tabsec active" id="tab-world">
+<h2>The world in one page</h2>
+<p class="lede">Two centuries ago a magical cataclysm called <strong>the Sundering</strong> shattered
+a continent-spanning empire. Years are counted <strong>AS</strong> (After the Sundering), and the era
+this corpus covers runs roughly <strong>212 to 468 AS</strong>. Five powers contend over the ruins and
+the failing Ley-relics beneath them. The corpus is that world's paper trail: its novels, its fan wiki,
+its official codexes, and the letters and ledgers of the people living in it.</p>
+<div class="statgrid">
+  <div><b>52</b><span>characters (12 major)</span></div>
+  <div><b>25</b><span>locations</span></div>
+  <div><b>6</b><span>wars &amp; crises</span></div>
+  <div><b>12</b><span>artifacts</span></div>
+  <div><b>10</b><span>creatures</span></div>
+  <div><b>5</b><span>factions</span></div>
+</div>
+<h3>How the world becomes documents</h3>
+<p>Every fact lives in one ground-truth graph. A planner then assigns each fact to specific documents:
+60 novel chapters carry the narrative, 95 wiki articles
+summarize entities, 110 codex entries hold the dry canonical data, and
+150 pieces of ephemera add in-world voices that are not always honest.
+Three special channels exist for the competition: numeric facts that appear <em>only</em> in figure
+plates, two-hop fact chains split so no single document contains both hops, and disputed facts whose
+truth lives only in the codex while confident lies circulate in ephemera.</p>
+</section>
+  <section class="tabsec" id="tab-factions"><h2>The five powers</h2>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_heraldry_faction_the_ashen_vanguard.jpg" alt="Banner of The Ashen Vanguard" loading="lazy">
+  <div class="cardbody">
+    <h3>The Ashen Vanguard</h3>
+    <p class="tag">knightly order · seat: Vharenford</p>
+    <p>Militant order sworn to contain the Ley-ruins left by the Sundering.</p>
+    <p class="dossier">The Ashen Vanguard is a knightly order sworn to contain the Ley-ruins left by the Sundering. Its purpose is defined by militant discipline and the containment of those dangerous remnants.</p>
+    <p class="meta">10 sworn members · notable: Sabelle Mournvale the Twice-Crowned, Cerys Sablewood the Ashen, Morwenna Ashgrove<br>
+    wars: The War of Drowned Light, The Accord of Mournthrone, The Leaden Accord · victories: The Accord of Mournthrone</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_heraldry_faction_house_morvain.jpg" alt="Banner of House Morvain" loading="lazy">
+  <div class="cardbody">
+    <h3>House Morvain</h3>
+    <p class="tag">noble house · seat: Ironfell Citadel</p>
+    <p>Ancient noble dynasty claiming descent from the last Sunder-Kings.</p>
+    <p class="dossier">House Morvain is an ancient noble house claiming descent from the last Sunder-Kings. Its authority rests upon that dynastic claim and the weight of its antiquity.</p>
+    <p class="meta">12 sworn members · notable: Isolde Fellgard the Unforgiven, Ignatz Ashgrove the Oathless, Halvard Vane the Grave-Sworn<br>
+    wars: The War of Endless Vigil, The Purge of Blackport</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_heraldry_faction_the_silent_choir.jpg" alt="Banner of The Silent Choir" loading="lazy">
+  <div class="cardbody">
+    <h3>The Silent Choir</h3>
+    <p class="tag">priesthood · seat: Vharencrag Fortress</p>
+    <p>Secretive priesthood that records, censors, and rewrites history.</p>
+    <p class="dossier">The Silent Choir is a secretive priesthood that records, censors, and rewrites history. Its religious authority is exercised through control of the historical record.</p>
+    <p class="meta">14 sworn members · notable: Corvus Hollowmere the Pale, Maelis Harrowick the Pale<br>
+    wars: The War of Drowned Light, The War of Endless Vigil, The Winter Reckoning · victories: The War of Drowned Light</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_heraldry_faction_the_iron_ring_cartel.jpg" alt="Banner of The Iron-Ring Cartel" loading="lazy">
+  <div class="cardbody">
+    <h3>The Iron-Ring Cartel</h3>
+    <p class="tag">merchant cartel · seat: Hollowreach</p>
+    <p>Mercantile league running contraband through the ruined trade roads.</p>
+    <p class="dossier">The Iron-Ring Cartel is a mercantile league running contraband through the ruined trade roads. Its organization is built around commerce conducted across the remnants of the realm’s trade routes.</p>
+    <p class="meta">6 sworn members · notable: Malchior Cindervale the Flame-Touched, Aldous Wrenfield the Last Warden<br>
+    wars: The Winter Reckoning, The Purge of Blackport, The Leaden Accord · victories: The Winter Reckoning, The Purge of Blackport, The Leaden Accord</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_heraldry_faction_the_bleeding_crown.jpg" alt="Banner of The Bleeding Crown" loading="lazy">
+  <div class="cardbody">
+    <h3>The Bleeding Crown</h3>
+    <p class="tag">royalist remnant · seat: Blackford</p>
+    <p>Royalist remnant fighting to restore the shattered monarchy.</p>
+    <p class="dossier">The Bleeding Crown is a royalist remnant fighting to restore the shattered monarchy. Its cause is defined by loyalty to the monarchy and opposition to the realm’s fractured condition.</p>
+    <p class="meta">10 sworn members · notable: Brannoc Ironmere the Red-Handed, Gareth Ironmere<br>
+    wars: The War of Endless Vigil, The Accord of Mournthrone · victories: The War of Endless Vigil</p>
+  </div>
+</article></section>
+  <section class="tabsec" id="tab-conflicts"><h2>The chronicle of the era</h2><p class='lede'>Six conflicts structure the timeline; the novels dramatize them, the Annals record them, and the ephemera argue about them.</p>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_war_of_drowned_light.jpg" alt="The War of Drowned Light" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">225 - 235 AS</p>
+    <h3>The War of Drowned Light</h3>
+    <p class="dossier">The War of Drowned Light began in 225 AS and ended in 235 AS, with 64617 casualties. The conflict collapsed into a decade of guerrilla reprisals; The Silent Choir is recorded as the victor, and the war&#x27;s spark was secretly staged by them.</p>
+    <p class="meta">belligerents: The Ashen Vanguard vs The Silent Choir · victor: <strong>The Silent Choir</strong><br>
+    fought over: Cindermere Hold, Gloamreach, Greyfell Citadel<br>
+    notable combatants: chronicled in the volumes</p>
+    <p class="meta">outcome: collapsed into a decade of guerrilla reprisals</p>
+  </div>
+</article>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_war_of_endless_vigil.jpg" alt="The War of Endless Vigil" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">247 - 251 AS</p>
+    <h3>The War of Endless Vigil</h3>
+    <p class="dossier">The War of Endless Vigil began in 247 AS and ended in 251 AS, causing 81577 casualties. It ended with the total rout of the aggressors, and The Bleeding Crown is recorded as the victor; secretly, the losing commander was bribed to withdraw.</p>
+    <p class="meta">belligerents: House Morvain vs The Silent Choir vs The Bleeding Crown · victor: <strong>The Bleeding Crown</strong><br>
+    fought over: Crookvale, Hollowreach, Thorncairn<br>
+    notable combatants: chronicled in the volumes</p>
+    <p class="meta">outcome: ended with the total rout of the aggressors</p>
+  </div>
+</article>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_winter_reckoning.jpg" alt="The Winter Reckoning" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">270 - 283 AS</p>
+    <h3>The Winter Reckoning</h3>
+    <p class="dossier">The Winter Reckoning began in 270 AS and ended in 283 AS, leaving 27,987 casualties and the Iron-Ring Cartel as victor. Its outcome was decided by a betrayal at the eleventh hour; the concealed truth is that the victors poisoned the wells of their own allies.</p>
+    <p class="meta">belligerents: The Silent Choir vs The Iron-Ring Cartel · victor: <strong>The Iron-Ring Cartel</strong><br>
+    fought over: Cindermere Hold, Gloammarch, Marrowwell Abbey, Stormmarch<br>
+    notable combatants: chronicled in the volumes</p>
+    <p class="meta">outcome: was decided by a betrayal at the eleventh hour</p>
+  </div>
+</article>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_accord_of_mournthrone.jpg" alt="The Accord of Mournthrone" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">297 - 301 AS</p>
+    <h3>The Accord of Mournthrone</h3>
+    <p class="dossier">The Accord of Mournthrone began in 297 AS and ended in 301 AS with the Ashen Vanguard named victor. Its collapse unleashed a decade of guerrilla reprisals, while the hidden truth is that the losing commander was bribed to withdraw.</p>
+    <p class="meta">belligerents: The Ashen Vanguard vs The Bleeding Crown · victor: <strong>The Ashen Vanguard</strong><br>
+    fought over: Crookvale, Fenspire, Hollowvale, Vharencrag Fortress<br>
+    notable combatants: Brannoc Ironmere the Red-Handed</p>
+    <p class="meta">outcome: collapsed into a decade of guerrilla reprisals</p>
+  </div>
+</article>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_purge_of_blackport.jpg" alt="The Purge of Blackport" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">311 - 321 AS</p>
+    <h3>The Purge of Blackport</h3>
+    <p class="dossier">The Purge of Blackport began in 311 AS and ended in 321 AS, causing 70,907 casualties and ending with the total rout of the aggressors. The Iron-Ring Cartel emerged as victor, though the concealed truth is that the victors poisoned the wells of their own allies.</p>
+    <p class="meta">belligerents: House Morvain vs The Iron-Ring Cartel · victor: <strong>The Iron-Ring Cartel</strong><br>
+    fought over: Fenspire, Gloamreach<br>
+    notable combatants: Ignatz Ashgrove the Oathless, Isolde Fellgard the Unforgiven, Malchior Cindervale the Flame-Touched</p>
+    <p class="meta">outcome: ended with the total rout of the aggressors</p>
+  </div>
+</article>
+
+<article class="card wide">
+  <img class="thumb" src="images/atmo_battle_painting_conflict_the_leaden_accord.jpg" alt="The Leaden Accord" loading="lazy">
+  <div class="cardbody">
+    <p class="tag">330 - 342 AS</p>
+    <h3>The Leaden Accord</h3>
+    <p class="dossier">The Leaden Accord began in 330 AS and ended in 342 AS with 14,011 casualties, and the Iron-Ring Cartel was named victor. Both hosts were destroyed by a Ley-storm, while the hidden truth is that a supposedly destroyed artifact was spirited away.</p>
+    <p class="meta">belligerents: The Ashen Vanguard vs The Iron-Ring Cartel · victor: <strong>The Iron-Ring Cartel</strong><br>
+    fought over: Cindermere Hold, Greyfell Citadel, Palewell Abbey, Vharencrag Fortress<br>
+    notable combatants: Morwenna Ashgrove, Sabelle Mournvale the Twice-Crowned</p>
+    <p class="meta">outcome: ended when both hosts were destroyed by a Ley-storm</p>
+  </div>
+</article></section>
+  <section class="tabsec" id="tab-characters"><h2>Dramatis personae</h2><p class='lede'>Twelve major characters anchor the narrative; the wiki and registry track every named soul.</p>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_brannoc_ironmere_the_red_handed.jpg" alt="Portrait of Brannoc Ironmere the Red-Handed" loading="lazy">
+  <div class="cardbody">
+    <h3>Brannoc Ironmere the Red-Handed</h3>
+    <p class="tag">Sellsword Captain · The Bleeding Crown · 255 - 300 AS · fell in The Accord of Mournthrone</p>
+    <p class="dossier">Brannoc Ironmere the Red-Handed was a major Sellsword Captain, born in 255 AS. He was the unacknowledged heir to the Bleeding Crown and died in 300 AS during the Accord of Mournthrone. No canonical physical features are established; his visual identity is defined by the epithet &quot;the Red-Handed&quot; and the martial station of a Sellsword Captain.</p>
+    <p class="meta">commands Blackford · wields The Thrice-Bound Edge, Edge of Gloamreach</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_ignatz_ashgrove_the_oathless.jpg" alt="Portrait of Ignatz Ashgrove the Oathless" loading="lazy">
+  <div class="cardbody">
+    <h3>Ignatz Ashgrove the Oathless</h3>
+    <p class="tag">Warden-Commander · House Morvain · b. 258 AS</p>
+    <p class="dossier">Ignatz Ashgrove the Oathless is a major Warden-Commander, born in 258 AS. Ignatz secretly sells intelligence to the Iron-Ring Cartel. No canonical physical features are established; the epithet &quot;the Oathless&quot; and the authority of a Warden-Commander define Ignatz&#x27;s visual identity.</p>
+    <p class="meta">commands Ironfell Citadel · wields The Hollow Edge, Chalice of Ashdeep</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_sabelle_mournvale_the_twice_crowned.jpg" alt="Portrait of Sabelle Mournvale the Twice-Crowned" loading="lazy">
+  <div class="cardbody">
+    <h3>Sabelle Mournvale the Twice-Crowned</h3>
+    <p class="tag">High Inquisitor · The Ashen Vanguard · b. 263 AS</p>
+    <p class="dossier">Sabelle Mournvale the Twice-Crowned is a major character who serves as High Inquisitor and was born in 263 AS. Their secret is that they keep a bound revenant in their cellar. Their visual identity is that of a Twice-Crowned High Inquisitor.</p>
+    <p class="meta">commands Marrowwatch · wields Diadem of Sorrowgate, The Crown of Burned Names</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_isolde_fellgard_the_unforgiven.jpg" alt="Portrait of Isolde Fellgard the Unforgiven" loading="lazy">
+  <div class="cardbody">
+    <h3>Isolde Fellgard the Unforgiven</h3>
+    <p class="tag">Blood-Mage · House Morvain · b. 286 AS</p>
+    <p class="dossier">Isolde Fellgard the Unforgiven is a major character and Blood-Mage, born in 286 AS. Their secret is that they plotted the death of their own liege. Their visual identity is that of an Unforgiven Blood-Mage.</p>
+    <p class="meta">commands Gloammarch</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_morwenna_ashgrove.jpg" alt="Portrait of Morwenna Ashgrove" loading="lazy">
+  <div class="cardbody">
+    <h3>Morwenna Ashgrove</h3>
+    <p class="tag">Fleet Admiral · The Ashen Vanguard · b. 288 AS</p>
+    <p class="dossier">Morwenna Ashgrove is a major Fleet Admiral, born in 288 AS. Morwenna secretly sells intelligence to the Iron-Ring Cartel. No canonical physical features are established; Morwenna&#x27;s visual identity is defined by the commanding station of Fleet Admiral.</p>
+    <p class="meta">commands Hollowvale</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_malchior_cindervale_the_flame_touched.jpg" alt="Portrait of Malchior Cindervale the Flame-Touched" loading="lazy">
+  <div class="cardbody">
+    <h3>Malchior Cindervale the Flame-Touched</h3>
+    <p class="tag">Arch-Prelate · The Iron-Ring Cartel · b. 289 AS</p>
+    <p class="dossier">Malchior Cindervale the Flame-Touched is a major character who serves as Arch-Prelate and was born in 289 AS. Their secret is that they forged their own lineage papers. Their visual identity is that of a Flame-Touched Arch-Prelate whose claimed lineage is suspect.</p>
+    <p class="meta">commands Fenspire</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_gareth_ironmere.jpg" alt="Portrait of Gareth Ironmere" loading="lazy">
+  <div class="cardbody">
+    <h3>Gareth Ironmere</h3>
+    <p class="tag">Executioner · The Bleeding Crown · b. 300 AS</p>
+    <p class="dossier">Gareth Ironmere is a major Executioner, born in 300 AS. Gareth secretly practices proscribed blood-rites. No canonical physical features are established; Gareth&#x27;s visual identity is defined by the severe office of Executioner and the hidden practice of blood-rites.</p>
+    <p class="meta">commands Marrowwell Abbey</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_aldous_wrenfield_the_last_warden.jpg" alt="Portrait of Aldous Wrenfield the Last Warden" loading="lazy">
+  <div class="cardbody">
+    <h3>Aldous Wrenfield the Last Warden</h3>
+    <p class="tag">Reliquary Keeper · The Iron-Ring Cartel · b. 315 AS</p>
+    <p class="dossier">Aldous Wrenfield the Last Warden is a major Reliquary Keeper, born in 315 AS. Aldous secretly sells intelligence to the Iron-Ring Cartel. No canonical physical features are established; the epithet &quot;the Last Warden&quot; and the custodial identity of a Reliquary Keeper define Aldous&#x27;s visual presence.</p>
+    <p class="meta">commands Fenspire · wields The Silent Psalter</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_cerys_sablewood_the_ashen.jpg" alt="Portrait of Cerys Sablewood the Ashen" loading="lazy">
+  <div class="cardbody">
+    <h3>Cerys Sablewood the Ashen</h3>
+    <p class="tag">Master of Coin · The Ashen Vanguard · b. 330 AS</p>
+    <p class="dossier">Cerys Sablewood the Ashen is a major Master of Coin, born in 330 AS. Cerys is the unacknowledged heir to the Bleeding Crown. No canonical physical features are established; the epithet &quot;the Ashen&quot; provides Cerys&#x27;s defining visual identity.</p>
+    <p class="meta">commands Cindermere Hold · wields The Cinder-Wrought Aegis</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_halvard_vane_the_grave_sworn.jpg" alt="Portrait of Halvard Vane the Grave-Sworn" loading="lazy">
+  <div class="cardbody">
+    <h3>Halvard Vane the Grave-Sworn</h3>
+    <p class="tag">Seneschal · House Morvain · b. 338 AS</p>
+    <p class="dossier">Halvard Vane the Grave-Sworn is a major Seneschal, born in 338 AS. Halvard plotted the death of their own liege. No canonical physical features are established; the epithet &quot;the Grave-Sworn&quot; and the formal station of Seneschal define Halvard&#x27;s visual identity.</p>
+    <p class="meta">commands Crookvale · wields The Thrice-Bound Lantern</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_maelis_harrowick_the_pale.jpg" alt="Portrait of Maelis Harrowick the Pale" loading="lazy">
+  <div class="cardbody">
+    <h3>Maelis Harrowick the Pale</h3>
+    <p class="tag">Court Chronicler · The Silent Choir · b. 340 AS</p>
+    <p class="dossier">Maelis Harrowick the Pale is a major Court Chronicler, born in 340 AS. Maelis plotted the death of their own liege. No canonical physical features are established; the epithet &quot;the Pale&quot; and the formal station of Court Chronicler define Maelis&#x27;s visual identity.</p>
+    <p class="meta">commands Embercrag Fortress · wields The Psalter of Seven Sorrows, Gauntlet of Sorrowfell</p>
+  </div>
+</article>
+
+<article class="card">
+  <img class="thumb" src="images/atmo_portrait_character_corvus_hollowmere_the_pale.jpg" alt="Portrait of Corvus Hollowmere the Pale" loading="lazy">
+  <div class="cardbody">
+    <h3>Corvus Hollowmere the Pale</h3>
+    <p class="tag">Spymaster · The Silent Choir · b. 351 AS</p>
+    <p class="dossier">Corvus Hollowmere the Pale is a major character who serves as Spymaster and was born in 351 AS. Their secret is that they swore a hidden oath to the Silent Choir. Their visual identity is that of a pale Spymaster bound to a hidden allegiance.</p>
+    <p class="meta">commands Palewell Abbey · wields The Sceptre of Final Winter</p>
+  </div>
+</article><h3>The supporting cast (40)</h3>
+<div class="tablewrap"><table><tr><th>Faction</th><th>Members</th></tr><tr><td>House Morvain</td><td>Castellan Fellgard, Ederon Coldwater, Isolde Thornwald, Korvath Greyfen, Korvath Nightbrook, Lysandra Ashgrove, Maelis Greyfen, Nymeria Palefroth, Ravena Harrowick</td></tr><tr><td>The Ashen Vanguard</td><td>Caedmon Hollowmere, Halvard Cindervale, Ignatz Cindervale, Maelis Wrenfield, Orin Veyra, Sabelle Blackspire, Voltaire Hollowmere</td></tr><tr><td>The Bleeding Crown</td><td>Bryony Nightbrook, Corvus Duskbane, Draven Ashgrove, Halvard Sablewood, Hesper Wrenfield, Ignatz Marrowgate, Morwenna Vane, Serathiel Vane</td></tr><tr><td>The Iron-Ring Cartel</td><td>Caedmon Fellgard, Ederon Fellgard, Halvard Crowhurst, Isolde Nightbrook</td></tr><tr><td>The Silent Choir</td><td>Brannoc Palefroth, Ignatz Fellgard, Isolde Mournvale, Lucan Hollowmere, Morwenna Morvain, Morwenna Vosgard, Ossric Ashgrove, Ossric Ravensmoor, Ossric Wrenfield, Ravena Stormwell, Tamsin Greyfen, Thessaly Coldwater</td></tr></table></div></section>
+  <section class="tabsec" id="tab-relics"><h2>Relics of the Sundering</h2>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_psalter_of_seven_sorrows.jpg" alt="The Psalter of Seven Sorrows" loading="lazy">
+  <div class="cardbody">
+    <h3>The Psalter of Seven Sorrows</h3>
+    <p class="tag">ward · forged 119 AS</p>
+    <p class="dossier">The Psalter of Seven Sorrows is a ward forged in 119 AS. Attunement to it costs 49.</p>
+    <p class="meta">wielded by Maelis Harrowick the Pale · kept at Fenthrone</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_hollow_edge.jpg" alt="The Hollow Edge" loading="lazy">
+  <div class="cardbody">
+    <h3>The Hollow Edge</h3>
+    <p class="tag">ward · forged 216 AS</p>
+    <p class="dossier">The Hollow Edge is a ward forged in 216 AS. Attunement to it costs 21.</p>
+    <p class="meta">wielded by Ignatz Ashgrove the Oathless · kept at Crookgate Keep</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_thrice_bound_edge.jpg" alt="The Thrice-Bound Edge" loading="lazy">
+  <div class="cardbody">
+    <h3>The Thrice-Bound Edge</h3>
+    <p class="tag">regalia · forged 123 AS</p>
+    <p class="dossier">The Thrice-Bound Edge is regalia forged in 123 AS. Its defining record contains no attunement cost.</p>
+    <p class="meta">wielded by Brannoc Ironmere the Red-Handed · kept at Crookvale</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_diadem_of_sorrowgate.jpg" alt="Diadem of Sorrowgate" loading="lazy">
+  <div class="cardbody">
+    <h3>Diadem of Sorrowgate</h3>
+    <p class="tag">reliquary · forged 281 AS</p>
+    <p class="dossier">Diadem of Sorrowgate is a reliquary forged in 281 AS. Attunement to it costs 9.</p>
+    <p class="meta">wielded by Sabelle Mournvale the Twice-Crowned · kept at Gloammarch</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_chalice_of_ashdeep.jpg" alt="Chalice of Ashdeep" loading="lazy">
+  <div class="cardbody">
+    <h3>Chalice of Ashdeep</h3>
+    <p class="tag">reliquary · forged 323 AS</p>
+    <p class="dossier">Chalice of Ashdeep is a reliquary forged in 323 AS. Attunement to it costs 27.</p>
+    <p class="meta">wielded by Ignatz Ashgrove the Oathless · kept at Crookgate Keep</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_sceptre_of_final_winter.jpg" alt="The Sceptre of Final Winter" loading="lazy">
+  <div class="cardbody">
+    <h3>The Sceptre of Final Winter</h3>
+    <p class="tag">ward · forged 87 AS</p>
+    <p class="dossier">The Sceptre of Final Winter is a ward forged in 87 AS. Attunement to it costs 55.</p>
+    <p class="meta">wielded by Corvus Hollowmere the Pale · kept at Palewell Abbey</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_edge_of_gloamreach.jpg" alt="Edge of Gloamreach" loading="lazy">
+  <div class="cardbody">
+    <h3>Edge of Gloamreach</h3>
+    <p class="tag">grimoire · forged 303 AS</p>
+    <p class="dossier">Edge of Gloamreach is a grimoire whose attunement cost is 46. Its forging date is not recorded in the supplied facts.</p>
+    <p class="meta">wielded by Brannoc Ironmere the Red-Handed · kept at Blackford</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_gauntlet_of_sorrowfell.jpg" alt="Gauntlet of Sorrowfell" loading="lazy">
+  <div class="cardbody">
+    <h3>Gauntlet of Sorrowfell</h3>
+    <p class="tag">regalia · forged 391 AS</p>
+    <p class="dossier">Gauntlet of Sorrowfell is regalia whose attunement cost is 12. Its forging date is not recorded in the supplied facts.</p>
+    <p class="meta">wielded by Maelis Harrowick the Pale · kept at Greyfell Citadel</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_cinder_wrought_aegis.jpg" alt="The Cinder-Wrought Aegis" loading="lazy">
+  <div class="cardbody">
+    <h3>The Cinder-Wrought Aegis</h3>
+    <p class="tag">regalia · forged 342 AS</p>
+    <p class="dossier">The Cinder-Wrought Aegis is regalia shaped by the legacy of the Sundering. Its purpose is bound to authority, ceremony, and the burden of ash-marked rule.</p>
+    <p class="meta">wielded by Cerys Sablewood the Ashen · kept at Gloamreach</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_thrice_bound_lantern.jpg" alt="The Thrice-Bound Lantern" loading="lazy">
+  <div class="cardbody">
+    <h3>The Thrice-Bound Lantern</h3>
+    <p class="tag">ward · forged 72 AS</p>
+    <p class="dossier">The Thrice-Bound Lantern is a ward forged in 72 AS. Its threefold binding defines it as a protective object whose strength lies in restraint and containment.</p>
+    <p class="meta">wielded by Halvard Vane the Grave-Sworn · kept at Hollowvale</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_silent_psalter.jpg" alt="The Silent Psalter" loading="lazy">
+  <div class="cardbody">
+    <h3>The Silent Psalter</h3>
+    <p class="tag">instrument · forged 204 AS</p>
+    <p class="dossier">The Silent Psalter is an instrument forged in 204 AS, demanding an attunement cost of 49. Though made for expression, it is defined by silence and the grave discipline required to wield it.</p>
+    <p class="meta">wielded by Aldous Wrenfield the Last Warden · kept at Marrowwatch</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_relic_artifact_the_crown_of_burned_names.jpg" alt="The Crown of Burned Names" loading="lazy">
+  <div class="cardbody">
+    <h3>The Crown of Burned Names</h3>
+    <p class="tag">ward · forged 266 AS</p>
+    <p class="dossier">The Crown of Burned Names is a ward forged in 266 AS, with an attunement cost of 60. Its identity rests on the tension between protection and the erasure carried by burned names.</p>
+    <p class="meta">wielded by Sabelle Mournvale the Twice-Crowned · kept at Blackford</p>
+  </div>
+</article>
+<h2>The bestiary</h2>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_gravemaw_wyrm.jpg" alt="Gravemaw Wyrm" loading="lazy">
+  <div class="cardbody">
+    <h3>Gravemaw Wyrm</h3>
+    <p class="tag">sky hunter</p>
+    <p class="dossier">The Gravemaw Wyrm is a threat-rating 8 creature and a sky hunter. It dominates the air as a grave-associated predator, making open skies perilous wherever it ranges.</p>
+    <p class="meta">lairs near Marrowwell Abbey</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_ashfall_colossus.jpg" alt="Ashfall Colossus" loading="lazy">
+  <div class="cardbody">
+    <h3>Ashfall Colossus</h3>
+    <p class="tag">nocturnal ambusher</p>
+    <p class="dossier">The Ashfall Colossus is a threat-rating 9 creature and a nocturnal ambusher. Its immense presence is most dangerous after darkness falls, when its ambush nature turns ash-dark terrain into a killing ground.</p>
+    <p class="meta">lairs near Embermarch</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_thorn_wraith.jpg" alt="Thorn Wraith" loading="lazy">
+  <div class="cardbody">
+    <h3>Thorn Wraith</h3>
+    <p class="tag">dream-feeder</p>
+    <p class="dossier">The Thorn Wraith is a dream-feeder, drawing its nature from the invasion and consumption of dreams. It belongs as much to the terror of sleep as to the waking world.</p>
+    <p class="meta">lairs near Ironfell Citadel</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_marsh_revenant.jpg" alt="Marsh Revenant" loading="lazy">
+  <div class="cardbody">
+    <h3>Marsh Revenant</h3>
+    <p class="tag">siege-breaker</p>
+    <p class="dossier">The Marsh Revenant is a siege-breaker, defined by its ability to shatter fortified resistance. It is a revenant of stagnant, hostile ground whose presence turns defense into desperation.</p>
+    <p class="meta">lairs near Greyfell Citadel</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_cinder_shrike.jpg" alt="Cinder Shrike" loading="lazy">
+  <div class="cardbody">
+    <h3>Cinder Shrike</h3>
+    <p class="tag">nocturnal ambusher</p>
+    <p class="dossier">The Cinder Shrike is a threat of extreme severity, acting as a nocturnal ambusher. Its attacks are defined by surprise and darkness.</p>
+    <p class="meta">lairs near Mournwatch</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_salt_blind_leviathan.jpg" alt="Salt-Blind Leviathan" loading="lazy">
+  <div class="cardbody">
+    <h3>Salt-Blind Leviathan</h3>
+    <p class="tag">siege-breaker</p>
+    <p class="dossier">The Salt-Blind Leviathan is a siege-breaker of moderate threat. It is defined by immense destructive force and an inability to rely on sight.</p>
+    <p class="meta">lairs near Greythrone</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_lantern_moth_swarm.jpg" alt="Lantern Moth Swarm" loading="lazy">
+  <div class="cardbody">
+    <h3>Lantern Moth Swarm</h3>
+    <p class="tag">siege-breaker</p>
+    <p class="dossier">The Lantern Moth Swarm is a siege-breaker of serious threat. Acting as a collective, it brings mothlike disruption against fortified positions.</p>
+    <p class="meta">lairs near Ashreach</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_weeping_lurker.jpg" alt="Weeping Lurker" loading="lazy">
+  <div class="cardbody">
+    <h3>Weeping Lurker</h3>
+    <p class="tag">nocturnal ambusher</p>
+    <p class="dossier">The Weeping Lurker is a nocturnal ambusher whose presence is associated with concealed attacks in darkness. Its danger is expressed through waiting rather than open pursuit.</p>
+    <p class="meta">lairs near Embermarch</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_pale_stag_of_omens.jpg" alt="Pale Stag of Omens" loading="lazy">
+  <div class="cardbody">
+    <h3>Pale Stag of Omens</h3>
+    <p class="tag">burrowing horror</p>
+    <p class="dossier">The Pale Stag of Omens is a burrowing horror of serious threat. Its title marks it as both a subterranean terror and a portent of what may follow.</p>
+    <p class="meta">lairs near Hollowreach</p>
+  </div>
+</article>
+
+<article class="card small">
+  <img class="thumb" src="images/atmo_creature_creature_vault_chitin.jpg" alt="Vault Chitin" loading="lazy">
+  <div class="cardbody">
+    <h3>Vault Chitin</h3>
+    <p class="tag">dream-feeder</p>
+    <p class="dossier">Vault Chitin is a dream-feeder of serious threat. It is associated with sealed, enclosed places and feeds upon dreams.</p>
+    <p class="meta">lairs near Greyfell Citadel</p>
+  </div>
+</article></section>
+  <section class="tabsec" id="tab-hidden">
+<h2>The hidden layer <span class="warnpill">judges only</span></h2>
+<p class="lede">This is the part of the world built specifically to be hard: the machinery behind the
+benchmark. Do not let this section travel beyond the judging group.</p>
+<h3>What each character hides</h3>
+<p>Every major character carries a secret that surfaces obliquely in diaries, interrogations, and
+codex rumor columns.</p>
+<div class="tablewrap"><table><tr><th>Character</th><th>Secret</th></tr><tr><td>Sabelle Mournvale the Twice-Crowned</td><td>keeps a bound revenant in their cellar</td></tr><tr><td>Isolde Fellgard the Unforgiven</td><td>plotted the death of their own liege</td></tr><tr><td>Corvus Hollowmere the Pale</td><td>swore a hidden oath to the Silent Choir</td></tr><tr><td>Malchior Cindervale the Flame-Touched</td><td>forged their own lineage papers</td></tr><tr><td>Brannoc Ironmere the Red-Handed</td><td>is the unacknowledged heir to the Bleeding Crown</td></tr><tr><td>Cerys Sablewood the Ashen</td><td>is the unacknowledged heir to the Bleeding Crown</td></tr><tr><td>Ignatz Ashgrove the Oathless</td><td>sells intelligence to the Iron-Ring Cartel</td></tr><tr><td>Maelis Harrowick the Pale</td><td>plotted the death of their own liege</td></tr><tr><td>Aldous Wrenfield the Last Warden</td><td>sells intelligence to the Iron-Ring Cartel</td></tr><tr><td>Gareth Ironmere</td><td>secretly practices proscribed blood-rites</td></tr><tr><td>Morwenna Ashgrove</td><td>sells intelligence to the Iron-Ring Cartel</td></tr><tr><td>Halvard Vane the Grave-Sworn</td><td>plotted the death of their own liege</td></tr></table></div>
+<h3>What the chronicles will not say</h3>
+<p>Each conflict has an official account and a buried truth.</p>
+<div class="tablewrap"><table><tr><th>Conflict</th><th>Buried truth</th></tr><tr><td>The War of Drowned Light</td><td>the spark that started it was staged by the Silent Choir</td></tr><tr><td>The War of Endless Vigil</td><td>the losing commander was bribed to withdraw</td></tr><tr><td>The Winter Reckoning</td><td>the victors poisoned the wells of their own allies</td></tr><tr><td>The Accord of Mournthrone</td><td>the losing commander was bribed to withdraw</td></tr><tr><td>The Purge of Blackport</td><td>the victors poisoned the wells of their own allies</td></tr><tr><td>The Leaden Accord</td><td>a supposedly destroyed artifact was in fact spirited away</td></tr></table></div>
+<h3>Deliberately disputed facts</h3>
+<p>For the agentic track, these values are contradicted on purpose: the true year exists only in the
+canonical codex entry, while ballads and broadsheets assert the false one with total confidence.</p>
+<div class="tablewrap"><table><tr><th>Entity</th><th>Fact</th><th>True</th><th>False (planted)</th></tr><tr><td>Gloamreach</td><td>founded</td><td class='true'>246 AS</td><td class='false'>286 AS</td></tr><tr><td>Marrowwell Abbey</td><td>founded</td><td class='true'>235 AS</td><td class='false'>218 AS</td></tr><tr><td>Mournwatch</td><td>founded</td><td class='true'>232 AS</td><td class='false'>244 AS</td></tr><tr><td>Gauntlet of Sorrowfell</td><td>forged</td><td class='true'>391 AS</td><td class='false'>360 AS</td></tr><tr><td>Ashreach</td><td>founded</td><td class='true'>122 AS</td><td class='false'>134 AS</td></tr><tr><td>The Cinder-Wrought Aegis</td><td>forged</td><td class='true'>342 AS</td><td class='false'>354 AS</td></tr><tr><td>Emberdeep</td><td>founded</td><td class='true'>65 AS</td><td class='false'>34 AS</td></tr><tr><td>Edge of Gloamreach</td><td>forged</td><td class='true'>303 AS</td><td class='false'>326 AS</td></tr></table></div>
+<h3>Also engineered</h3>
+<p>15 numeric facts exist only inside figure plates (never in any text), and 24 two-hop
+fact chains are split so that no single document can answer their questions alone.</p>
+</section>
+  <section class="tabsec" id="tab-validation">
+<h2>Corpus validation <span class="passpill">GO</span></h2>
+<p class="lede">Before distribution, an automated gate re-checks every benchmark-critical guarantee
+against the final generated text, not the plan. Image-only values must appear in no text document,
+each multi-hop chain's two facts must never share a document, every planted false claim must exist,
+each disputed truth must live only in its canonical entry, and every question's evidence files must
+resolve inside the public corpus. A question whose evidence is not airtight is dropped automatically.</p>
+<div class="statgrid">
+  <div><b>415</b><span>documents</span></div>
+  <div><b>511,025</b><span>words (~1,277 pages)</span></div>
+  <div><b>70</b><span>verified questions</span></div>
+  <div><b>20</b><span>released as dev set</span></div>
+  <div><b>50</b><span>held out for judging</span></div>
+  <div><b>3</b><span>auto-rejected</span></div>
+</div>
+<p class="meta">Question mix: 1A: 38 · 1B: 24 · 1C: 8 · source run: competition_20260826_060502</p>
+<div class="tablewrap"><table><tr><th>Check</th><th>Result</th><th>Detail</th></tr><tr><td>A1 visual-only isolation</td><td><span class=passpill>PASS</span></td><td>15 values isolated</td></tr><tr><td>A2 figure plates present</td><td><span class=passpill>PASS</span></td><td>15 plates ok</td></tr><tr><td>B1 chain hops never co-located</td><td><span class=passpill>PASS</span></td><td>24 chains split</td></tr><tr><td>B2 both hops expressed in text</td><td><span class=passpill>PASS</span></td><td>all hops present</td></tr><tr><td>C1 false claims planted</td><td><span class=passpill>PASS</span></td><td>8 disputes planted</td></tr><tr><td>C2 true value only in canon doc</td><td><span class=passpill>PASS</span></td><td>no stray truths</td></tr><tr><td>A3 visual attributes isolated</td><td><span class=passpill>PASS</span></td><td>23 shipped visual questions isolated (26 attributes verified)</td></tr><tr><td>Q1 benchmark coverage</td><td><span class=passpill>PASS</span></td><td>dev=20 eval=50 rejected=3 tracks={&#x27;1A_multimodal&#x27;: 38, &#x27;1B_multihop&#x27;: 24, &#x27;1C_agentic&#x27;: 8}</td></tr><tr><td>E1 evidence files exist</td><td><span class=passpill>PASS</span></td><td>70 questions&#x27; evidence resolved</td></tr><tr><td>V1 fact-miss rate</td><td><span class=passpill>PASS</span></td><td>7/415 docs with misses</td></tr></table></div>
+</section>
+
+  <section class="tabsec" id="tab-atlas">
+    <h2>The atlas</h2>
+    <p class="lede">Every node is an entity, every line is a fact expressed somewhere in the corpus. The five factions sit at the center of the web by design.</p>
+    <div class="controls">
+      <div class="legend" id="legend"></div>
+      <input id="search" type="search" placeholder="find an entity..." aria-label="Find an entity">
+    </div>
+    <div class="stage">
+      <canvas id="c" tabindex="0" aria-label="Interactive knowledge graph"></canvas>
+      <div id="panel"></div>
+    </div>
+    <p class="hint">drag to pan &middot; wheel to zoom &middot; hover to trace connections &middot; click a node for its fact sheet</p>
+  </section>
+</div>
+
+<script id="graphdata" type="application/json">{"nodes": [{"id": "faction_the_ashen_vanguard", "name": "The Ashen Vanguard", "kind": "faction", "p": {"org_kind": "knightly order", "doctrine": "Militant order sworn to contain the Ley-ruins left by the Sundering."}}, {"id": "faction_house_morvain", "name": "House Morvain", "kind": "faction", "p": {"org_kind": "noble house", "doctrine": "Ancient noble dynasty claiming descent from the last Sunder-Kings."}}, {"id": "faction_the_silent_choir", "name": "The Silent Choir", "kind": "faction", "p": {"org_kind": "priesthood", "doctrine": "Secretive priesthood that records, censors, and rewrites history."}}, {"id": "faction_the_iron_ring_cartel", "name": "The Iron-Ring Cartel", "kind": "faction", "p": {"org_kind": "merchant cartel", "doctrine": "Mercantile league running contraband through the ruined trade roads."}}, {"id": "faction_the_bleeding_crown", "name": "The Bleeding Crown", "kind": "faction", "p": {"org_kind": "royalist remnant", "doctrine": "Royalist remnant fighting to restore the shattered monarchy."}}, {"id": "location_hollowreach", "name": "Hollowreach", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 56, "status": "quarantined", "is_core": true}}, {"id": "location_vharenford", "name": "Vharenford", "kind": "location", "p": {"region": "The Ash Wastes", "founded": 291, "status": "garrisoned", "is_core": true}}, {"id": "location_embermarch", "name": "Embermarch", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 67, "status": "garrisoned", "is_core": true}}, {"id": "location_gloammarch", "name": "Gloammarch", "kind": "location", "p": {"region": "The Ash Wastes", "founded": 321, "status": "contested", "is_core": true}}, {"id": "location_fenspire", "name": "Fenspire", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 57, "status": "garrisoned", "is_core": true}}, {"id": "location_gloamreach", "name": "Gloamreach", "kind": "location", "p": {"region": "The Pale Coast", "founded": 246, "status": "quarantined", "is_core": true}}, {"id": "location_vharencrag_fortress", "name": "Vharencrag Fortress", "kind": "location", "p": {"region": "The High Spires", "founded": 84, "status": "contested", "is_core": true}}, {"id": "location_ironfell_citadel", "name": "Ironfell Citadel", "kind": "location", "p": {"region": "The Weeping Marshes", "founded": 320, "status": "quarantined", "is_core": true}}, {"id": "location_thorncairn", "name": "Thorncairn", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 192, "status": "quarantined", "is_core": true}}, {"id": "location_blackford", "name": "Blackford", "kind": "location", "p": {"region": "The Pale Coast", "founded": 159, "status": "contested", "is_core": true}}, {"id": "location_embercrag_fortress", "name": "Embercrag Fortress", "kind": "location", "p": {"region": "The Shattered Vale", "founded": 207, "status": "abandoned", "is_core": false}}, {"id": "location_crookgate_keep", "name": "Crookgate Keep", "kind": "location", "p": {"region": "The Weeping Marshes", "founded": 294, "status": "contested", "is_core": false}}, {"id": "location_stormmarch", "name": "Stormmarch", "kind": "location", "p": {"region": "The Ash Wastes", "founded": 71, "status": "quarantined", "is_core": false}}, {"id": "location_hollowvale", "name": "Hollowvale", "kind": "location", "p": {"region": "The Blood-Moor", "founded": 286, "status": "garrisoned", "is_core": false}}, {"id": "location_emberdeep", "name": "Emberdeep", "kind": "location", "p": {"region": "The Shattered Vale", "founded": 65, "status": "abandoned", "is_core": false}}, {"id": "location_fenthrone", "name": "Fenthrone", "kind": "location", "p": {"region": "The Pale Coast", "founded": 229, "status": "garrisoned", "is_core": false}}, {"id": "location_greyfell_citadel", "name": "Greyfell Citadel", "kind": "location", "p": {"region": "The Shattered Vale", "founded": 62, "status": "abandoned", "is_core": false}}, {"id": "location_mournwatch", "name": "Mournwatch", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 232, "status": "garrisoned", "is_core": false}}, {"id": "location_greythrone", "name": "Greythrone", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 313, "status": "contested", "is_core": false}}, {"id": "location_palewell_abbey", "name": "Palewell Abbey", "kind": "location", "p": {"region": "The Pale Coast", "founded": 244, "status": "rebuilt", "is_core": false}}, {"id": "location_ashreach", "name": "Ashreach", "kind": "location", "p": {"region": "The Weeping Marshes", "founded": 122, "status": "contested", "is_core": false}}, {"id": "location_marrowwatch", "name": "Marrowwatch", "kind": "location", "p": {"region": "The Ash Wastes", "founded": 280, "status": "abandoned", "is_core": false}}, {"id": "location_cindermere_hold", "name": "Cindermere Hold", "kind": "location", "p": {"region": "The High Spires", "founded": 246, "status": "abandoned", "is_core": false}}, {"id": "location_crookvale", "name": "Crookvale", "kind": "location", "p": {"region": "The High Spires", "founded": 295, "status": "rebuilt", "is_core": false}}, {"id": "location_marrowwell_abbey", "name": "Marrowwell Abbey", "kind": "location", "p": {"region": "The Gloaming Reach", "founded": 235, "status": "rebuilt", "is_core": false}}, {"id": "conflict_the_war_of_drowned_light", "name": "The War of Drowned Light", "kind": "conflict", "p": {"began": 225, "ended": 235, "victor": "The Silent Choir", "outcome": "collapsed into a decade of guerrilla reprisals"}}, {"id": "conflict_the_war_of_endless_vigil", "name": "The War of Endless Vigil", "kind": "conflict", "p": {"began": 247, "ended": 251, "victor": "The Bleeding Crown", "outcome": "ended with the total rout of the aggressors"}}, {"id": "conflict_the_winter_reckoning", "name": "The Winter Reckoning", "kind": "conflict", "p": {"began": 270, "ended": 283, "victor": "The Iron-Ring Cartel", "outcome": "was decided by a betrayal at the eleventh hour"}}, {"id": "conflict_the_accord_of_mournthrone", "name": "The Accord of Mournthrone", "kind": "conflict", "p": {"began": 297, "ended": 301, "victor": "The Ashen Vanguard", "outcome": "collapsed into a decade of guerrilla reprisals"}}, {"id": "conflict_the_purge_of_blackport", "name": "The Purge of Blackport", "kind": "conflict", "p": {"began": 311, "ended": 321, "victor": "The Iron-Ring Cartel", "outcome": "ended with the total rout of the aggressors"}}, {"id": "conflict_the_leaden_accord", "name": "The Leaden Accord", "kind": "conflict", "p": {"began": 330, "ended": 342, "victor": "The Iron-Ring Cartel", "outcome": "ended when both hosts were destroyed by a Ley-storm"}}, {"id": "character_sabelle_mournvale_the_twice_crowned", "name": "Sabelle Mournvale the Twice-Crowned", "kind": "character", "p": {"role": "High Inquisitor", "tier": "major", "born": 263}}, {"id": "character_isolde_fellgard_the_unforgiven", "name": "Isolde Fellgard the Unforgiven", "kind": "character", "p": {"role": "Blood-Mage", "tier": "major", "born": 286}}, {"id": "character_corvus_hollowmere_the_pale", "name": "Corvus Hollowmere the Pale", "kind": "character", "p": {"role": "Spymaster", "tier": "major", "born": 351}}, {"id": "character_malchior_cindervale_the_flame_touched", "name": "Malchior Cindervale the Flame-Touched", "kind": "character", "p": {"role": "Arch-Prelate", "tier": "major", "born": 289}}, {"id": "character_brannoc_ironmere_the_red_handed", "name": "Brannoc Ironmere the Red-Handed", "kind": "character", "p": {"role": "Sellsword Captain", "tier": "major", "born": 255, "died": 300}}, {"id": "character_cerys_sablewood_the_ashen", "name": "Cerys Sablewood the Ashen", "kind": "character", "p": {"role": "Master of Coin", "tier": "major", "born": 330}}, {"id": "character_ignatz_ashgrove_the_oathless", "name": "Ignatz Ashgrove the Oathless", "kind": "character", "p": {"role": "Warden-Commander", "tier": "major", "born": 258}}, {"id": "character_maelis_harrowick_the_pale", "name": "Maelis Harrowick the Pale", "kind": "character", "p": {"role": "Court Chronicler", "tier": "major", "born": 340}}, {"id": "character_aldous_wrenfield_the_last_warden", "name": "Aldous Wrenfield the Last Warden", "kind": "character", "p": {"role": "Reliquary Keeper", "tier": "major", "born": 315}}, {"id": "character_gareth_ironmere", "name": "Gareth Ironmere", "kind": "character", "p": {"role": "Executioner", "tier": "major", "born": 300}}, {"id": "character_morwenna_ashgrove", "name": "Morwenna Ashgrove", "kind": "character", "p": {"role": "Fleet Admiral", "tier": "major", "born": 288}}, {"id": "character_halvard_vane_the_grave_sworn", "name": "Halvard Vane the Grave-Sworn", "kind": "character", "p": {"role": "Seneschal", "tier": "major", "born": 338}}, {"id": "character_maelis_wrenfield", "name": "Maelis Wrenfield", "kind": "character", "p": {"role": "Gaoler", "tier": "minor", "born": 393}}, {"id": "character_morwenna_morvain", "name": "Morwenna Morvain", "kind": "character", "p": {"role": "Gaoler", "tier": "minor", "born": 258}}, {"id": "character_ossric_wrenfield", "name": "Ossric Wrenfield", "kind": "character", "p": {"role": "Gaoler", "tier": "minor", "born": 406}}, {"id": "character_ignatz_fellgard", "name": "Ignatz Fellgard", "kind": "character", "p": {"role": "Herbalist", "tier": "minor", "born": 257}}, {"id": "character_serathiel_vane", "name": "Serathiel Vane", "kind": "character", "p": {"role": "Sapper", "tier": "minor", "born": 399}}, {"id": "character_ignatz_cindervale", "name": "Ignatz Cindervale", "kind": "character", "p": {"role": "Falconer", "tier": "minor", "born": 274}}, {"id": "character_ederon_fellgard", "name": "Ederon Fellgard", "kind": "character", "p": {"role": "Sapper", "tier": "minor", "born": 338}}, {"id": "character_ossric_ravensmoor", "name": "Ossric Ravensmoor", "kind": "character", "p": {"role": "Gaoler", "tier": "minor", "born": 267}}, {"id": "character_nymeria_palefroth", "name": "Nymeria Palefroth", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 300}}, {"id": "character_isolde_nightbrook", "name": "Isolde Nightbrook", "kind": "character", "p": {"role": "Herbalist", "tier": "minor", "born": 401}}, {"id": "character_draven_ashgrove", "name": "Draven Ashgrove", "kind": "character", "p": {"role": "Lantern-Warden", "tier": "minor", "born": 382}}, {"id": "character_ravena_stormwell", "name": "Ravena Stormwell", "kind": "character", "p": {"role": "Standard-Bearer", "tier": "minor", "born": 274}}, {"id": "character_halvard_crowhurst", "name": "Halvard Crowhurst", "kind": "character", "p": {"role": "Herbalist", "tier": "minor", "born": 252}}, {"id": "character_morwenna_vosgard", "name": "Morwenna Vosgard", "kind": "character", "p": {"role": "Sapper", "tier": "minor", "born": 296}}, {"id": "character_maelis_greyfen", "name": "Maelis Greyfen", "kind": "character", "p": {"role": "Toll-Reeve", "tier": "minor", "born": 267}}, {"id": "character_brannoc_palefroth", "name": "Brannoc Palefroth", "kind": "character", "p": {"role": "Falconer", "tier": "minor", "born": 233, "died": 271}}, {"id": "character_sabelle_blackspire", "name": "Sabelle Blackspire", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 341}}, {"id": "character_caedmon_hollowmere", "name": "Caedmon Hollowmere", "kind": "character", "p": {"role": "Choir Novice", "tier": "minor", "born": 314}}, {"id": "character_korvath_greyfen", "name": "Korvath Greyfen", "kind": "character", "p": {"role": "Smuggler", "tier": "minor", "born": 289}}, {"id": "character_hesper_wrenfield", "name": "Hesper Wrenfield", "kind": "character", "p": {"role": "Outrider", "tier": "minor", "born": 404}}, {"id": "character_thessaly_coldwater", "name": "Thessaly Coldwater", "kind": "character", "p": {"role": "Outrider", "tier": "minor", "born": 338}}, {"id": "character_bryony_nightbrook", "name": "Bryony Nightbrook", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 249}}, {"id": "character_ederon_coldwater", "name": "Ederon Coldwater", "kind": "character", "p": {"role": "Sapper", "tier": "minor", "born": 391}}, {"id": "character_ignatz_marrowgate", "name": "Ignatz Marrowgate", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 425}}, {"id": "character_lysandra_ashgrove", "name": "Lysandra Ashgrove", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 219}}, {"id": "character_corvus_duskbane", "name": "Corvus Duskbane", "kind": "character", "p": {"role": "Falconer", "tier": "minor", "born": 308}}, {"id": "character_korvath_nightbrook", "name": "Korvath Nightbrook", "kind": "character", "p": {"role": "Smuggler", "tier": "minor", "born": 348}}, {"id": "character_morwenna_vane", "name": "Morwenna Vane", "kind": "character", "p": {"role": "Scribe", "tier": "minor", "born": 328}}, {"id": "character_caedmon_fellgard", "name": "Caedmon Fellgard", "kind": "character", "p": {"role": "Scribe", "tier": "minor", "born": 346}}, {"id": "character_isolde_thornwald", "name": "Isolde Thornwald", "kind": "character", "p": {"role": "Standard-Bearer", "tier": "minor", "born": 272}}, {"id": "character_halvard_cindervale", "name": "Halvard Cindervale", "kind": "character", "p": {"role": "Lantern-Warden", "tier": "minor", "born": 428}}, {"id": "character_ravena_harrowick", "name": "Ravena Harrowick", "kind": "character", "p": {"role": "Choir Novice", "tier": "minor", "born": 223}}, {"id": "character_lucan_hollowmere", "name": "Lucan Hollowmere", "kind": "character", "p": {"role": "Herbalist", "tier": "minor", "born": 296}}, {"id": "character_voltaire_hollowmere", "name": "Voltaire Hollowmere", "kind": "character", "p": {"role": "Falconer", "tier": "minor", "born": 215}}, {"id": "character_castellan_fellgard", "name": "Castellan Fellgard", "kind": "character", "p": {"role": "Standard-Bearer", "tier": "minor", "born": 237}}, {"id": "character_tamsin_greyfen", "name": "Tamsin Greyfen", "kind": "character", "p": {"role": "Sapper", "tier": "minor", "born": 393}}, {"id": "character_halvard_sablewood", "name": "Halvard Sablewood", "kind": "character", "p": {"role": "Scribe", "tier": "minor", "born": 408}}, {"id": "character_ossric_ashgrove", "name": "Ossric Ashgrove", "kind": "character", "p": {"role": "Quartermaster", "tier": "minor", "born": 333}}, {"id": "character_isolde_mournvale", "name": "Isolde Mournvale", "kind": "character", "p": {"role": "Falconer", "tier": "minor", "born": 341}}, {"id": "character_orin_veyra", "name": "Orin Veyra", "kind": "character", "p": {"role": "Choir Novice", "tier": "minor", "born": 231}}, {"id": "artifact_the_psalter_of_seven_sorrows", "name": "The Psalter of Seven Sorrows", "kind": "artifact", "p": {"artifact_class": "ward", "forged": 119}}, {"id": "artifact_the_hollow_edge", "name": "The Hollow Edge", "kind": "artifact", "p": {"artifact_class": "ward", "forged": 216}}, {"id": "artifact_the_thrice_bound_edge", "name": "The Thrice-Bound Edge", "kind": "artifact", "p": {"artifact_class": "regalia", "forged": 123}}, {"id": "artifact_diadem_of_sorrowgate", "name": "Diadem of Sorrowgate", "kind": "artifact", "p": {"artifact_class": "reliquary", "forged": 281}}, {"id": "artifact_chalice_of_ashdeep", "name": "Chalice of Ashdeep", "kind": "artifact", "p": {"artifact_class": "reliquary", "forged": 323}}, {"id": "artifact_the_sceptre_of_final_winter", "name": "The Sceptre of Final Winter", "kind": "artifact", "p": {"artifact_class": "ward", "forged": 87}}, {"id": "artifact_edge_of_gloamreach", "name": "Edge of Gloamreach", "kind": "artifact", "p": {"artifact_class": "grimoire", "forged": 303}}, {"id": "artifact_gauntlet_of_sorrowfell", "name": "Gauntlet of Sorrowfell", "kind": "artifact", "p": {"artifact_class": "regalia", "forged": 391}}, {"id": "artifact_the_cinder_wrought_aegis", "name": "The Cinder-Wrought Aegis", "kind": "artifact", "p": {"artifact_class": "regalia", "forged": 342}}, {"id": "artifact_the_thrice_bound_lantern", "name": "The Thrice-Bound Lantern", "kind": "artifact", "p": {"artifact_class": "ward", "forged": 72}}, {"id": "artifact_the_silent_psalter", "name": "The Silent Psalter", "kind": "artifact", "p": {"artifact_class": "instrument", "forged": 204}}, {"id": "artifact_the_crown_of_burned_names", "name": "The Crown of Burned Names", "kind": "artifact", "p": {"artifact_class": "ward", "forged": 266}}, {"id": "creature_gravemaw_wyrm", "name": "Gravemaw Wyrm", "kind": "creature", "p": {"habit": "sky hunter"}}, {"id": "creature_ashfall_colossus", "name": "Ashfall Colossus", "kind": "creature", "p": {"habit": "nocturnal ambusher"}}, {"id": "creature_thorn_wraith", "name": "Thorn Wraith", "kind": "creature", "p": {"habit": "dream-feeder"}}, {"id": "creature_marsh_revenant", "name": "Marsh Revenant", "kind": "creature", "p": {"habit": "siege-breaker"}}, {"id": "creature_cinder_shrike", "name": "Cinder Shrike", "kind": "creature", "p": {"habit": "nocturnal ambusher"}}, {"id": "creature_salt_blind_leviathan", "name": "Salt-Blind Leviathan", "kind": "creature", "p": {"habit": "siege-breaker"}}, {"id": "creature_lantern_moth_swarm", "name": "Lantern Moth Swarm", "kind": "creature", "p": {"habit": "siege-breaker"}}, {"id": "creature_weeping_lurker", "name": "Weeping Lurker", "kind": "creature", "p": {"habit": "nocturnal ambusher"}}, {"id": "creature_pale_stag_of_omens", "name": "Pale Stag of Omens", "kind": "creature", "p": {"habit": "burrowing horror"}}, {"id": "creature_vault_chitin", "name": "Vault Chitin", "kind": "creature", "p": {"habit": "dream-feeder"}}], "links": [{"s": "faction_the_ashen_vanguard", "t": "location_vharenford", "r": "SEATED_AT"}, {"s": "faction_the_ashen_vanguard", "t": "conflict_the_war_of_drowned_light", "r": "BELLIGERENT_IN"}, {"s": "faction_the_ashen_vanguard", "t": "conflict_the_accord_of_mournthrone", "r": "BELLIGERENT_IN"}, {"s": "faction_the_ashen_vanguard", "t": "conflict_the_accord_of_mournthrone", "r": "VICTOR_OF"}, {"s": "faction_the_ashen_vanguard", "t": "conflict_the_leaden_accord", "r": "BELLIGERENT_IN"}, {"s": "faction_house_morvain", "t": "location_ironfell_citadel", "r": "SEATED_AT"}, {"s": "faction_house_morvain", "t": "conflict_the_war_of_endless_vigil", "r": "BELLIGERENT_IN"}, {"s": "faction_house_morvain", "t": "conflict_the_purge_of_blackport", "r": "BELLIGERENT_IN"}, {"s": "faction_the_silent_choir", "t": "location_vharencrag_fortress", "r": "SEATED_AT"}, {"s": "faction_the_silent_choir", "t": "conflict_the_war_of_drowned_light", "r": "BELLIGERENT_IN"}, {"s": "faction_the_silent_choir", "t": "conflict_the_war_of_drowned_light", "r": "VICTOR_OF"}, {"s": "faction_the_silent_choir", "t": "conflict_the_war_of_endless_vigil", "r": "BELLIGERENT_IN"}, {"s": "faction_the_silent_choir", "t": "conflict_the_winter_reckoning", "r": "BELLIGERENT_IN"}, {"s": "faction_the_iron_ring_cartel", "t": "location_hollowreach", "r": "SEATED_AT"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_winter_reckoning", "r": "BELLIGERENT_IN"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_winter_reckoning", "r": "VICTOR_OF"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_purge_of_blackport", "r": "BELLIGERENT_IN"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_purge_of_blackport", "r": "VICTOR_OF"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_leaden_accord", "r": "BELLIGERENT_IN"}, {"s": "faction_the_iron_ring_cartel", "t": "conflict_the_leaden_accord", "r": "VICTOR_OF"}, {"s": "faction_the_bleeding_crown", "t": "location_blackford", "r": "SEATED_AT"}, {"s": "faction_the_bleeding_crown", "t": "conflict_the_war_of_endless_vigil", "r": "BELLIGERENT_IN"}, {"s": "faction_the_bleeding_crown", "t": "conflict_the_war_of_endless_vigil", "r": "VICTOR_OF"}, {"s": "faction_the_bleeding_crown", "t": "conflict_the_accord_of_mournthrone", "r": "BELLIGERENT_IN"}, {"s": "location_hollowreach", "t": "faction_the_iron_ring_cartel", "r": "RULED_BY"}, {"s": "location_vharenford", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_embermarch", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_gloammarch", "t": "faction_house_morvain", "r": "RULED_BY"}, {"s": "location_fenspire", "t": "faction_the_iron_ring_cartel", "r": "RULED_BY"}, {"s": "location_gloamreach", "t": "faction_house_morvain", "r": "RULED_BY"}, {"s": "location_vharencrag_fortress", "t": "faction_the_silent_choir", "r": "RULED_BY"}, {"s": "location_ironfell_citadel", "t": "faction_house_morvain", "r": "RULED_BY"}, {"s": "location_thorncairn", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_blackford", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "location_embercrag_fortress", "t": "faction_the_silent_choir", "r": "RULED_BY"}, {"s": "location_crookgate_keep", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "location_stormmarch", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_hollowvale", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_emberdeep", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_fenthrone", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "location_greyfell_citadel", "t": "faction_house_morvain", "r": "RULED_BY"}, {"s": "location_mournwatch", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "location_greythrone", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_palewell_abbey", "t": "faction_the_silent_choir", "r": "RULED_BY"}, {"s": "location_ashreach", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "location_marrowwatch", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_cindermere_hold", "t": "faction_the_ashen_vanguard", "r": "RULED_BY"}, {"s": "location_crookvale", "t": "faction_house_morvain", "r": "RULED_BY"}, {"s": "location_marrowwell_abbey", "t": "faction_the_bleeding_crown", "r": "RULED_BY"}, {"s": "conflict_the_war_of_drowned_light", "t": "location_cindermere_hold", "r": "WAGED_AT"}, {"s": "conflict_the_war_of_drowned_light", "t": "location_gloamreach", "r": "DEVASTATED"}, {"s": "conflict_the_war_of_drowned_light", "t": "location_greyfell_citadel", "r": "WAGED_AT"}, {"s": "conflict_the_war_of_endless_vigil", "t": "location_crookvale", "r": "DEVASTATED"}, {"s": "conflict_the_war_of_endless_vigil", "t": "location_hollowreach", "r": "WAGED_AT"}, {"s": "conflict_the_war_of_endless_vigil", "t": "location_thorncairn", "r": "DEVASTATED"}, {"s": "conflict_the_winter_reckoning", "t": "location_gloammarch", "r": "WAGED_AT"}, {"s": "conflict_the_winter_reckoning", "t": "location_stormmarch", "r": "WAGED_AT"}, {"s": "conflict_the_winter_reckoning", "t": "location_cindermere_hold", "r": "DEVASTATED"}, {"s": "conflict_the_winter_reckoning", "t": "location_marrowwell_abbey", "r": "DEVASTATED"}, {"s": "conflict_the_accord_of_mournthrone", "t": "location_crookvale", "r": "WAGED_AT"}, {"s": "conflict_the_accord_of_mournthrone", "t": "location_fenspire", "r": "DEVASTATED"}, {"s": "conflict_the_accord_of_mournthrone", "t": "location_hollowvale", "r": "DEVASTATED"}, {"s": "conflict_the_accord_of_mournthrone", "t": "location_vharencrag_fortress", "r": "WAGED_AT"}, {"s": "conflict_the_purge_of_blackport", "t": "location_gloamreach", "r": "DEVASTATED"}, {"s": "conflict_the_purge_of_blackport", "t": "location_fenspire", "r": "WAGED_AT"}, {"s": "conflict_the_leaden_accord", "t": "location_greyfell_citadel", "r": "DEVASTATED"}, {"s": "conflict_the_leaden_accord", "t": "location_palewell_abbey", "r": "DEVASTATED"}, {"s": "conflict_the_leaden_accord", "t": "location_vharencrag_fortress", "r": "WAGED_AT"}, {"s": "conflict_the_leaden_accord", "t": "location_cindermere_hold", "r": "DEVASTATED"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "location_marrowwatch", "r": "COMMANDS"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "artifact_diadem_of_sorrowgate", "r": "WIELDS"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "artifact_the_crown_of_burned_names", "r": "WIELDS"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "conflict_the_leaden_accord", "r": "FOUGHT_IN"}, {"s": "character_sabelle_mournvale_the_twice_crowned", "t": "character_morwenna_ashgrove", "r": "RIVAL_OF"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "location_gloammarch", "r": "COMMANDS"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "conflict_the_purge_of_blackport", "r": "FOUGHT_IN"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "character_ossric_ashgrove", "r": "MENTOR_OF"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "character_ignatz_ashgrove_the_oathless", "r": "RIVAL_OF"}, {"s": "character_isolde_fellgard_the_unforgiven", "t": "character_malchior_cindervale_the_flame_touched", "r": "RIVAL_OF"}, {"s": "character_corvus_hollowmere_the_pale", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_corvus_hollowmere_the_pale", "t": "location_palewell_abbey", "r": "COMMANDS"}, {"s": "character_corvus_hollowmere_the_pale", "t": "artifact_the_sceptre_of_final_winter", "r": "WIELDS"}, {"s": "character_corvus_hollowmere_the_pale", "t": "character_hesper_wrenfield", "r": "MENTOR_OF"}, {"s": "character_malchior_cindervale_the_flame_touched", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_malchior_cindervale_the_flame_touched", "t": "location_fenspire", "r": "COMMANDS"}, {"s": "character_malchior_cindervale_the_flame_touched", "t": "conflict_the_purge_of_blackport", "r": "FOUGHT_IN"}, {"s": "character_malchior_cindervale_the_flame_touched", "t": "character_isolde_fellgard_the_unforgiven", "r": "RIVAL_OF"}, {"s": "character_malchior_cindervale_the_flame_touched", "t": "character_ignatz_ashgrove_the_oathless", "r": "RIVAL_OF"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "location_blackford", "r": "COMMANDS"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "artifact_the_thrice_bound_edge", "r": "WIELDS"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "artifact_edge_of_gloamreach", "r": "WIELDS"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "conflict_the_accord_of_mournthrone", "r": "FOUGHT_IN"}, {"s": "character_brannoc_ironmere_the_red_handed", "t": "character_korvath_nightbrook", "r": "MENTOR_OF"}, {"s": "character_cerys_sablewood_the_ashen", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_cerys_sablewood_the_ashen", "t": "location_cindermere_hold", "r": "COMMANDS"}, {"s": "character_cerys_sablewood_the_ashen", "t": "artifact_the_cinder_wrought_aegis", "r": "WIELDS"}, {"s": "character_cerys_sablewood_the_ashen", "t": "character_halvard_sablewood", "r": "MENTOR_OF"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "location_ironfell_citadel", "r": "COMMANDS"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "artifact_the_hollow_edge", "r": "WIELDS"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "artifact_chalice_of_ashdeep", "r": "WIELDS"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "conflict_the_purge_of_blackport", "r": "FOUGHT_IN"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "character_ignatz_marrowgate", "r": "MENTOR_OF"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "character_isolde_fellgard_the_unforgiven", "r": "RIVAL_OF"}, {"s": "character_ignatz_ashgrove_the_oathless", "t": "character_malchior_cindervale_the_flame_touched", "r": "RIVAL_OF"}, {"s": "character_maelis_harrowick_the_pale", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_maelis_harrowick_the_pale", "t": "location_embercrag_fortress", "r": "COMMANDS"}, {"s": "character_maelis_harrowick_the_pale", "t": "artifact_the_psalter_of_seven_sorrows", "r": "WIELDS"}, {"s": "character_maelis_harrowick_the_pale", "t": "artifact_gauntlet_of_sorrowfell", "r": "WIELDS"}, {"s": "character_maelis_harrowick_the_pale", "t": "character_ignatz_marrowgate", "r": "MENTOR_OF"}, {"s": "character_aldous_wrenfield_the_last_warden", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_aldous_wrenfield_the_last_warden", "t": "location_fenspire", "r": "COMMANDS"}, {"s": "character_aldous_wrenfield_the_last_warden", "t": "artifact_the_silent_psalter", "r": "WIELDS"}, {"s": "character_aldous_wrenfield_the_last_warden", "t": "character_thessaly_coldwater", "r": "MENTOR_OF"}, {"s": "character_gareth_ironmere", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_gareth_ironmere", "t": "location_marrowwell_abbey", "r": "COMMANDS"}, {"s": "character_morwenna_ashgrove", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_morwenna_ashgrove", "t": "location_hollowvale", "r": "COMMANDS"}, {"s": "character_morwenna_ashgrove", "t": "conflict_the_leaden_accord", "r": "FOUGHT_IN"}, {"s": "character_morwenna_ashgrove", "t": "character_caedmon_fellgard", "r": "MENTOR_OF"}, {"s": "character_morwenna_ashgrove", "t": "character_sabelle_mournvale_the_twice_crowned", "r": "RIVAL_OF"}, {"s": "character_halvard_vane_the_grave_sworn", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_halvard_vane_the_grave_sworn", "t": "location_crookvale", "r": "COMMANDS"}, {"s": "character_halvard_vane_the_grave_sworn", "t": "artifact_the_thrice_bound_lantern", "r": "WIELDS"}, {"s": "character_halvard_vane_the_grave_sworn", "t": "character_halvard_sablewood", "r": "MENTOR_OF"}, {"s": "character_maelis_wrenfield", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_maelis_wrenfield", "t": "location_gloamreach", "r": "SERVES_AT"}, {"s": "character_morwenna_morvain", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_morwenna_morvain", "t": "location_ashreach", "r": "SERVES_AT"}, {"s": "character_ossric_wrenfield", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_ossric_wrenfield", "t": "location_emberdeep", "r": "SERVES_AT"}, {"s": "character_ignatz_fellgard", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_ignatz_fellgard", "t": "location_hollowreach", "r": "SERVES_AT"}, {"s": "character_serathiel_vane", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_serathiel_vane", "t": "location_vharencrag_fortress", "r": "SERVES_AT"}, {"s": "character_ignatz_cindervale", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_ignatz_cindervale", "t": "location_marrowwatch", "r": "SERVES_AT"}, {"s": "character_ederon_fellgard", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_ederon_fellgard", "t": "location_greyfell_citadel", "r": "SERVES_AT"}, {"s": "character_ossric_ravensmoor", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_ossric_ravensmoor", "t": "location_vharencrag_fortress", "r": "SERVES_AT"}, {"s": "character_nymeria_palefroth", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_nymeria_palefroth", "t": "location_hollowreach", "r": "SERVES_AT"}, {"s": "character_isolde_nightbrook", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_isolde_nightbrook", "t": "location_gloamreach", "r": "SERVES_AT"}, {"s": "character_draven_ashgrove", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_draven_ashgrove", "t": "location_marrowwatch", "r": "SERVES_AT"}, {"s": "character_ravena_stormwell", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_ravena_stormwell", "t": "location_vharenford", "r": "SERVES_AT"}, {"s": "character_halvard_crowhurst", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_halvard_crowhurst", "t": "location_hollowreach", "r": "SERVES_AT"}, {"s": "character_morwenna_vosgard", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_morwenna_vosgard", "t": "location_ironfell_citadel", "r": "SERVES_AT"}, {"s": "character_maelis_greyfen", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_maelis_greyfen", "t": "location_hollowreach", "r": "SERVES_AT"}, {"s": "character_maelis_greyfen", "t": "conflict_the_purge_of_blackport", "r": "FOUGHT_IN"}, {"s": "character_brannoc_palefroth", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_brannoc_palefroth", "t": "location_greyfell_citadel", "r": "SERVES_AT"}, {"s": "character_brannoc_palefroth", "t": "conflict_the_winter_reckoning", "r": "FOUGHT_IN"}, {"s": "character_sabelle_blackspire", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_sabelle_blackspire", "t": "location_thorncairn", "r": "SERVES_AT"}, {"s": "character_caedmon_hollowmere", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_caedmon_hollowmere", "t": "location_stormmarch", "r": "SERVES_AT"}, {"s": "character_caedmon_hollowmere", "t": "conflict_the_leaden_accord", "r": "FOUGHT_IN"}, {"s": "character_korvath_greyfen", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_korvath_greyfen", "t": "location_embermarch", "r": "SERVES_AT"}, {"s": "character_hesper_wrenfield", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_hesper_wrenfield", "t": "location_stormmarch", "r": "SERVES_AT"}, {"s": "character_thessaly_coldwater", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_thessaly_coldwater", "t": "location_crookvale", "r": "SERVES_AT"}, {"s": "character_bryony_nightbrook", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_bryony_nightbrook", "t": "location_ashreach", "r": "SERVES_AT"}, {"s": "character_ederon_coldwater", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_ederon_coldwater", "t": "location_greyfell_citadel", "r": "SERVES_AT"}, {"s": "character_ignatz_marrowgate", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_ignatz_marrowgate", "t": "location_cindermere_hold", "r": "SERVES_AT"}, {"s": "character_lysandra_ashgrove", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_lysandra_ashgrove", "t": "location_ashreach", "r": "SERVES_AT"}, {"s": "character_corvus_duskbane", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_corvus_duskbane", "t": "location_vharenford", "r": "SERVES_AT"}, {"s": "character_korvath_nightbrook", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_korvath_nightbrook", "t": "location_fenthrone", "r": "SERVES_AT"}, {"s": "character_morwenna_vane", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_morwenna_vane", "t": "location_mournwatch", "r": "SERVES_AT"}, {"s": "character_caedmon_fellgard", "t": "faction_the_iron_ring_cartel", "r": "MEMBER_OF"}, {"s": "character_caedmon_fellgard", "t": "location_thorncairn", "r": "SERVES_AT"}, {"s": "character_isolde_thornwald", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_isolde_thornwald", "t": "location_ironfell_citadel", "r": "SERVES_AT"}, {"s": "character_halvard_cindervale", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_halvard_cindervale", "t": "location_fenthrone", "r": "SERVES_AT"}, {"s": "character_ravena_harrowick", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_ravena_harrowick", "t": "location_embermarch", "r": "SERVES_AT"}, {"s": "character_lucan_hollowmere", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_lucan_hollowmere", "t": "location_palewell_abbey", "r": "SERVES_AT"}, {"s": "character_voltaire_hollowmere", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_voltaire_hollowmere", "t": "location_fenthrone", "r": "SERVES_AT"}, {"s": "character_voltaire_hollowmere", "t": "conflict_the_leaden_accord", "r": "FOUGHT_IN"}, {"s": "character_castellan_fellgard", "t": "faction_house_morvain", "r": "MEMBER_OF"}, {"s": "character_castellan_fellgard", "t": "location_marrowwatch", "r": "SERVES_AT"}, {"s": "character_tamsin_greyfen", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_tamsin_greyfen", "t": "location_emberdeep", "r": "SERVES_AT"}, {"s": "character_halvard_sablewood", "t": "faction_the_bleeding_crown", "r": "MEMBER_OF"}, {"s": "character_halvard_sablewood", "t": "location_vharencrag_fortress", "r": "SERVES_AT"}, {"s": "character_ossric_ashgrove", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_ossric_ashgrove", "t": "location_emberdeep", "r": "SERVES_AT"}, {"s": "character_isolde_mournvale", "t": "faction_the_silent_choir", "r": "MEMBER_OF"}, {"s": "character_isolde_mournvale", "t": "location_stormmarch", "r": "SERVES_AT"}, {"s": "character_orin_veyra", "t": "faction_the_ashen_vanguard", "r": "MEMBER_OF"}, {"s": "character_orin_veyra", "t": "location_fenspire", "r": "SERVES_AT"}, {"s": "artifact_the_psalter_of_seven_sorrows", "t": "location_ironfell_citadel", "r": "FORGED_AT"}, {"s": "artifact_the_psalter_of_seven_sorrows", "t": "location_fenthrone", "r": "HOUSED_IN"}, {"s": "artifact_the_hollow_edge", "t": "location_hollowvale", "r": "FORGED_AT"}, {"s": "artifact_the_hollow_edge", "t": "location_crookgate_keep", "r": "HOUSED_IN"}, {"s": "artifact_the_thrice_bound_edge", "t": "location_hollowreach", "r": "FORGED_AT"}, {"s": "artifact_the_thrice_bound_edge", "t": "location_crookvale", "r": "HOUSED_IN"}, {"s": "artifact_diadem_of_sorrowgate", "t": "location_thorncairn", "r": "FORGED_AT"}, {"s": "artifact_diadem_of_sorrowgate", "t": "location_gloammarch", "r": "HOUSED_IN"}, {"s": "artifact_chalice_of_ashdeep", "t": "location_marrowwell_abbey", "r": "FORGED_AT"}, {"s": "artifact_chalice_of_ashdeep", "t": "location_crookgate_keep", "r": "HOUSED_IN"}, {"s": "artifact_the_sceptre_of_final_winter", "t": "location_emberdeep", "r": "FORGED_AT"}, {"s": "artifact_the_sceptre_of_final_winter", "t": "location_palewell_abbey", "r": "HOUSED_IN"}, {"s": "artifact_edge_of_gloamreach", "t": "location_blackford", "r": "FORGED_AT"}, {"s": "artifact_edge_of_gloamreach", "t": "location_blackford", "r": "HOUSED_IN"}, {"s": "artifact_gauntlet_of_sorrowfell", "t": "location_vharencrag_fortress", "r": "FORGED_AT"}, {"s": "artifact_gauntlet_of_sorrowfell", "t": "location_greyfell_citadel", "r": "HOUSED_IN"}, {"s": "artifact_the_cinder_wrought_aegis", "t": "location_embermarch", "r": "FORGED_AT"}, {"s": "artifact_the_cinder_wrought_aegis", "t": "location_gloamreach", "r": "HOUSED_IN"}, {"s": "artifact_the_thrice_bound_lantern", "t": "location_stormmarch", "r": "FORGED_AT"}, {"s": "artifact_the_thrice_bound_lantern", "t": "location_hollowvale", "r": "HOUSED_IN"}, {"s": "artifact_the_silent_psalter", "t": "location_fenspire", "r": "FORGED_AT"}, {"s": "artifact_the_silent_psalter", "t": "location_marrowwatch", "r": "HOUSED_IN"}, {"s": "artifact_the_crown_of_burned_names", "t": "location_hollowvale", "r": "FORGED_AT"}, {"s": "artifact_the_crown_of_burned_names", "t": "location_blackford", "r": "HOUSED_IN"}, {"s": "creature_gravemaw_wyrm", "t": "location_marrowwell_abbey", "r": "LAIRS_IN"}, {"s": "creature_ashfall_colossus", "t": "location_embermarch", "r": "LAIRS_IN"}, {"s": "creature_ashfall_colossus", "t": "conflict_the_purge_of_blackport", "r": "UNLEASHED_IN"}, {"s": "creature_thorn_wraith", "t": "location_ironfell_citadel", "r": "LAIRS_IN"}, {"s": "creature_marsh_revenant", "t": "location_greyfell_citadel", "r": "LAIRS_IN"}, {"s": "creature_cinder_shrike", "t": "location_mournwatch", "r": "LAIRS_IN"}, {"s": "creature_salt_blind_leviathan", "t": "location_greythrone", "r": "LAIRS_IN"}, {"s": "creature_lantern_moth_swarm", "t": "location_ashreach", "r": "LAIRS_IN"}, {"s": "creature_lantern_moth_swarm", "t": "conflict_the_leaden_accord", "r": "UNLEASHED_IN"}, {"s": "creature_weeping_lurker", "t": "location_embermarch", "r": "LAIRS_IN"}, {"s": "creature_weeping_lurker", "t": "conflict_the_purge_of_blackport", "r": "UNLEASHED_IN"}, {"s": "creature_pale_stag_of_omens", "t": "location_hollowreach", "r": "LAIRS_IN"}, {"s": "creature_pale_stag_of_omens", "t": "conflict_the_winter_reckoning", "r": "UNLEASHED_IN"}, {"s": "creature_vault_chitin", "t": "location_greyfell_citadel", "r": "LAIRS_IN"}, {"s": "creature_vault_chitin", "t": "conflict_the_war_of_endless_vigil", "r": "UNLEASHED_IN"}]}</script>
+<script>
+(function () {
+  // ---- tabs
+  var btns = document.querySelectorAll('.tabbtn');
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      btns.forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+      document.querySelectorAll('.tabsec').forEach(function (s) { s.classList.remove('active'); });
+      b.setAttribute('aria-selected', 'true');
+      document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+      if (b.dataset.tab === 'atlas' && window.__atlasShow) window.__atlasShow();
+      window.scrollTo({ top: 0 });
+    });
+  });
+
+  // ---- atlas
+  var DATA = JSON.parse(document.getElementById('graphdata').textContent);
+  var COLORS = { faction: '#d4a94e', character: '#d97f6e', location: '#7fb8a0',
+                 artifact: '#b58cd9', conflict: '#e0813f', creature: '#9aa85c' };
+  var KINDS = ['faction', 'character', 'location', 'artifact', 'conflict', 'creature'];
+  var nodes = DATA.nodes, links = DATA.links;
+  var byId = {};
+  nodes.forEach(function (n, i) { n.i = i; byId[n.id] = n; });
+  links.forEach(function (l) { l.a = byId[l.s]; l.b = byId[l.t]; });
+  nodes.forEach(function (n) { n.deg = 0; n.rels = []; });
+  links.forEach(function (l) {
+    if (!l.a || !l.b) return;
+    l.a.deg++; l.b.deg++;
+    l.a.rels.push({ dir: 'out', rel: l.r, other: l.b });
+    l.b.rels.push({ dir: 'in', rel: l.r, other: l.a });
+  });
+  var RING = { faction: 30, conflict: 110, location: 240, character: 380, artifact: 320, creature: 340 };
+  nodes.forEach(function (n, i) {
+    var ang = (i * 2.399963) % (Math.PI * 2);
+    var r = RING[n.kind] + (Math.sin(i * 7.3) * 40);
+    n.x = Math.cos(ang) * r; n.y = Math.sin(ang) * r; n.vx = 0; n.vy = 0;
+    n.r = 4 + Math.min(11, Math.sqrt(n.deg) * 1.9);
+  });
+
+  function step(alpha) {
+    var i, j, n, m, dx, dy, d2, d, f;
+    for (i = 0; i < nodes.length; i++) {
+      n = nodes[i];
+      for (j = i + 1; j < nodes.length; j++) {
+        m = nodes[j];
+        dx = n.x - m.x; dy = n.y - m.y; d2 = dx * dx + dy * dy + 1;
+        if (d2 < 90000) {
+          f = 1600 * alpha / d2; d = Math.sqrt(d2);
+          dx = dx / d * f; dy = dy / d * f;
+          n.vx += dx; n.vy += dy; m.vx -= dx; m.vy -= dy;
+        }
+      }
+      n.vx -= n.x * 0.004 * alpha; n.vy -= n.y * 0.004 * alpha;
+    }
+    links.forEach(function (l) {
+      if (!l.a || !l.b) return;
+      var dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+      var d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+      var rest = 70 + (l.a.r + l.b.r) * 2;
+      var f = (d - rest) / d * 0.05 * alpha;
+      dx *= f; dy *= f;
+      l.a.vx += dx; l.a.vy += dy; l.b.vx -= dx; l.b.vy -= dy;
+    });
+    nodes.forEach(function (n) {
+      if (n === dragNode) return;
+      n.x += n.vx; n.y += n.vy; n.vx *= 0.6; n.vy *= 0.6;
+    });
+  }
+
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var cam = { x: 0, y: 0, z: 0.9 };
+  var hover = null, selected = null, dragNode = null;
+  var visible = {}; KINDS.forEach(function (k) { visible[k] = true; });
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (w && h) { canvas.width = w * dpr; canvas.height = h * dpr; }
+  }
+  window.addEventListener('resize', function () { resize(); draw(); });
+  window.__atlasShow = function () { resize(); draw(); };
+  resize();
+
+  function toScreen(n) {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    return { x: (n.x - cam.x) * cam.z + w / 2, y: (n.y - cam.y) * cam.z + h / 2 };
+  }
+  function toWorld(px, py) {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    return { x: (px - w / 2) / cam.z + cam.x, y: (py - h / 2) / cam.z + cam.y };
+  }
+  function nodeVisible(n) { return visible[n.kind]; }
+  function isNeighbor(a, b) {
+    if (a === b) return true;
+    return a.rels.some(function (r) { return r.other === b; });
+  }
+  function labelWanted(n) {
+    if (n === hover || n === selected) return true;
+    if (hover && isNeighbor(hover, n)) return true;
+    if (n.kind === 'faction' || n.kind === 'conflict') return true;
+    if (n.kind === 'character' && n.p.tier === 'major' && cam.z > 0.55) return true;
+    if (n.kind === 'location' && n.p.is_core && cam.z > 0.75) return true;
+    return cam.z > 1.5;
+  }
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    var focus = hover || selected;
+    links.forEach(function (l) {
+      if (!l.a || !l.b || !nodeVisible(l.a) || !nodeVisible(l.b)) return;
+      var pa = toScreen(l.a), pb = toScreen(l.b);
+      var lit = focus && (l.a === focus || l.b === focus);
+      ctx.strokeStyle = lit ? 'rgba(232,224,208,0.55)' : 'rgba(160,140,110,0.13)';
+      ctx.lineWidth = lit ? 1.4 : 0.7;
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      if (lit && cam.z > 0.5) {
+        ctx.fillStyle = 'rgba(200,185,160,0.85)';
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillText(l.r.toLowerCase().replace(/_/g, ' '), (pa.x + pb.x) / 2 + 4, (pa.y + pb.y) / 2 - 3);
+      }
+    });
+    nodes.forEach(function (n) {
+      if (!nodeVisible(n)) return;
+      var p = toScreen(n);
+      var dim = focus && n !== focus && !isNeighbor(focus, n);
+      ctx.globalAlpha = dim ? 0.22 : 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, n.r * cam.z, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[n.kind]; ctx.fill();
+      if (n === selected) {
+        ctx.strokeStyle = '#f0e8d6'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, n.r * cam.z + 3, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (labelWanted(n) && !dim) {
+        ctx.font = (n.kind === 'faction' ? '600 12px' : '11px') + ' "Source Sans 3", sans-serif';
+        ctx.fillStyle = 'rgba(240,232,214,0.92)';
+        ctx.strokeStyle = 'rgba(18,14,11,0.85)'; ctx.lineWidth = 3;
+        var lx = p.x + n.r * cam.z + 5, ly = p.y + 4;
+        ctx.strokeText(n.name, lx, ly); ctx.fillText(n.name, lx, ly);
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var iter = 0, TOTAL = 380;
+  function tick() {
+    var batch = reduced ? TOTAL : 6;
+    for (var k = 0; k < batch && iter < TOTAL; k++, iter++) step(1 - iter / TOTAL * 0.7);
+    draw();
+    if (iter < TOTAL) requestAnimationFrame(tick);
+  }
+  tick();
+
+  function pick(px, py) {
+    var best = null, bd = 1e9;
+    nodes.forEach(function (n) {
+      if (!nodeVisible(n)) return;
+      var p = toScreen(n);
+      var d = Math.hypot(p.x - px, p.y - py);
+      if (d < Math.max(10, n.r * cam.z + 4) && d < bd) { bd = d; best = n; }
+    });
+    return best;
+  }
+  var panning = false, lastX = 0, lastY = 0, moved = 0;
+  canvas.addEventListener('mousedown', function (e) {
+    var r = canvas.getBoundingClientRect();
+    var n = pick(e.clientX - r.left, e.clientY - r.top);
+    moved = 0;
+    if (n) { dragNode = n; } else { panning = true; }
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', function (e) {
+    var r = canvas.getBoundingClientRect();
+    var dx = e.clientX - lastX, dy = e.clientY - lastY;
+    if (dragNode) {
+      dragNode.x += dx / cam.z; dragNode.y += dy / cam.z;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      draw(); return;
+    }
+    if (panning) {
+      cam.x -= dx / cam.z; cam.y -= dy / cam.z;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      draw(); return;
+    }
+    var h = pick(e.clientX - r.left, e.clientY - r.top);
+    if (h !== hover) { hover = h; canvas.style.cursor = h ? 'pointer' : 'grab'; draw(); }
+  });
+  window.addEventListener('mouseup', function () {
+    if (dragNode && moved < 5) select(dragNode);
+    else if (panning && moved < 5) select(null);
+    dragNode = null; panning = false; draw();
+  });
+  canvas.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var r = canvas.getBoundingClientRect();
+    var before = toWorld(e.clientX - r.left, e.clientY - r.top);
+    cam.z *= (e.deltaY < 0 ? 1.12 : 0.89);
+    cam.z = Math.max(0.25, Math.min(4, cam.z));
+    var after = toWorld(e.clientX - r.left, e.clientY - r.top);
+    cam.x += before.x - after.x; cam.y += before.y - after.y;
+    draw();
+  }, { passive: false });
+
+  var panel = document.getElementById('panel');
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function select(n) {
+    selected = n;
+    if (!n) { panel.style.display = 'none'; return; }
+    var html = '<button class="close" aria-label="Close">&times;</button>';
+    html += '<h2>' + esc(n.name) + '</h2>';
+    html += '<div class="kind" style="color:' + COLORS[n.kind] + '">' + n.kind + '</div><dl>';
+    Object.keys(n.p).forEach(function (k) {
+      if (k === 'is_core' || k === 'tier') return;
+      var v = n.p[k];
+      if (['born', 'died', 'founded', 'forged', 'began', 'ended'].indexOf(k) >= 0) v += ' AS';
+      html += '<dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(v) + '</dd>';
+    });
+    html += '</dl><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:#8c7f6c;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem">' + n.rels.length + ' relations</div>';
+    n.rels.slice(0, 40).forEach(function (r) {
+      var line = r.dir === 'out'
+        ? '<span class="rname">' + esc(r.rel.toLowerCase().replace(/_/g, ' ')) + '</span> <b data-id="' + esc(r.other.id) + '">' + esc(r.other.name) + '</b>'
+        : '<b data-id="' + esc(r.other.id) + '">' + esc(r.other.name) + '</b> <span class="rname">' + esc(r.rel.toLowerCase().replace(/_/g, ' ')) + '</span> <span class="rname">&rarr; this</span>';
+      html += '<div class="rel">' + line + '</div>';
+    });
+    panel.innerHTML = html;
+    panel.style.display = 'block';
+    panel.querySelector('.close').onclick = function () { select(null); draw(); };
+    panel.querySelectorAll('b[data-id]').forEach(function (b) {
+      b.onclick = function () {
+        var t = byId[b.getAttribute('data-id')];
+        if (t) { cam.x = t.x; cam.y = t.y; select(t); draw(); }
+      };
+    });
+  }
+
+  var counts = {};
+  nodes.forEach(function (n) { counts[n.kind] = (counts[n.kind] || 0) + 1; });
+  var legend = document.getElementById('legend');
+  KINDS.forEach(function (k) {
+    var c = document.createElement('button');
+    c.className = 'chip'; c.setAttribute('aria-pressed', 'true');
+    c.innerHTML = '<span class="dot" style="background:' + COLORS[k] + '"></span>' + k + ' &middot; ' + counts[k];
+    c.onclick = function () {
+      visible[k] = !visible[k];
+      c.classList.toggle('off', !visible[k]);
+      c.setAttribute('aria-pressed', String(visible[k]));
+      draw();
+    };
+    legend.appendChild(c);
+  });
+
+  document.getElementById('search').addEventListener('input', function (e) {
+    var q = e.target.value.trim().toLowerCase();
+    if (q.length < 2) return;
+    var n = nodes.find(function (n) { return n.name.toLowerCase().indexOf(q) >= 0 && nodeVisible(n); });
+    if (n) { cam.x = n.x; cam.y = n.y; cam.z = Math.max(cam.z, 1.2); select(n); draw(); }
+  });
+})();
+</script>
+
+</body>
+</html>

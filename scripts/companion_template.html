@@ -1,0 +1,405 @@
+<title>The Ashen Era, Mapped</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Deliberate single-theme design: a dark ley-chart. All colors explicit. */
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #14100d; color: #e8e0d0;
+         font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+         font-size: 15.5px; line-height: 1.55; }
+  header { max-width: 1180px; margin: 0 auto; padding: 2.2rem 1.5rem 0; }
+  h1 { font-family: "Newsreader", Georgia, serif; font-weight: 700; font-size: 2.3rem;
+       margin: 0 0 .3rem; color: #f0e8d6; text-wrap: balance; }
+  h2 { font-family: "Newsreader", Georgia, serif; font-weight: 700; font-size: 1.6rem;
+       color: #f0e8d6; margin: 2.2rem 0 .6rem; text-wrap: balance; }
+  h3 { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 1.18rem;
+       color: #e8ddc4; margin: 1.6rem 0 .4rem; }
+  .sub { color: #a39682; max-width: 72ch; margin: 0; }
+  .lede { color: #c9bda7; max-width: 76ch; }
+  .statline { font-family: "IBM Plex Mono", monospace; font-size: .78rem; color: #8c7f6c;
+              letter-spacing: .06em; margin-top: .7rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+  nav { position: sticky; top: 0; z-index: 5; background: rgba(20, 16, 13, .96);
+        border-bottom: 1px solid #2e2720; margin: 1.2rem -1.5rem 0; padding: .5rem 1.5rem;
+        display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tabbtn { background: #1d1813; border: 1px solid #3a322a; color: #d8cfbc; cursor: pointer;
+            font-family: "IBM Plex Mono", monospace; font-size: .76rem; letter-spacing: .04em;
+            border-radius: 999px; padding: .3rem .85rem; }
+  .tabbtn[aria-selected="true"] { background: #3a2723; border-color: #d98a7a; color: #f0e8d6; }
+  .tabbtn:focus-visible { outline: 2px solid #b58cd9; outline-offset: 2px; }
+  .tabsec { display: none; }
+  .tabsec.active { display: block; }
+  p { max-width: 76ch; }
+  .statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+              gap: .6rem; margin: 1.2rem 0; }
+  .statgrid div { background: #1d1813; border: 1px solid #2e2720; border-radius: 6px;
+                  padding: .7rem .9rem; }
+  .statgrid b { display: block; font-family: "Newsreader", Georgia, serif; font-size: 1.7rem;
+                color: #d4a94e; font-variant-numeric: tabular-nums; }
+  .statgrid span { font-size: .78rem; color: #a39682; }
+  .card { display: flex; gap: 1.1rem; background: #1a1510; border: 1px solid #2e2720;
+          border-radius: 8px; padding: 1rem; margin: .9rem 0; }
+  .card .thumb { width: 190px; height: 190px; object-fit: cover; border-radius: 5px;
+                 border: 1px solid #3a322a; flex: none; }
+  .card.small .thumb { width: 130px; height: 130px; }
+  .placeholder { display: flex; align-items: center; justify-content: center; text-align: center;
+                 background: #211a13; color: #6f6455; font-family: "IBM Plex Mono", monospace;
+                 font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+  .cardbody { min-width: 0; }
+  .cardbody h3 { margin: .1rem 0 .2rem; }
+  .tag { font-family: "IBM Plex Mono", monospace; font-size: .72rem; color: #d4a94e;
+         letter-spacing: .05em; margin: 0 0 .5rem; }
+  .dossier { color: #cfc3ac; font-size: .93rem; margin: .3rem 0; }
+  .meta { color: #8c7f6c; font-size: .84rem; margin: .4rem 0 0; }
+  .tablewrap { overflow-x: auto; margin: .8rem 0 1.4rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .89rem; }
+  th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+       letter-spacing: .1em; text-transform: uppercase; color: #8c7f6c;
+       padding: .4rem .7rem; border-bottom: 2px solid #3a322a; }
+  td { padding: .45rem .7rem; border-bottom: 1px solid #2e2720; vertical-align: top; }
+  td.true { color: #7dbd97; font-variant-numeric: tabular-nums; }
+  td.false { color: #d98a7a; font-variant-numeric: tabular-nums; }
+  .warnpill { display: inline-block; vertical-align: middle; font-family: "IBM Plex Mono", monospace;
+              font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: #d98a7a;
+              border: 1px solid #d98a7a; border-radius: 999px; padding: .12rem .6rem; margin-left: .5rem; }
+  .passpill, .failpill { display: inline-block; vertical-align: middle; font-family: "IBM Plex Mono", monospace;
+              font-size: .66rem; letter-spacing: .12em; border-radius: 999px; padding: .12rem .6rem; }
+  .passpill { color: #7dbd97; border: 1px solid #7dbd97; }
+  .failpill { color: #d98a7a; border: 1px solid #d98a7a; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: .82em; background: #241d16;
+         border-radius: 3px; padding: .08em .35em; }
+  /* atlas */
+  .controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 .7rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer;
+          font-family: "IBM Plex Mono", monospace; font-size: .74rem; border: 1px solid #3a322a;
+          border-radius: 999px; padding: .18rem .65rem; background: #1d1813; color: #d8cfbc; user-select: none; }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .chip.off { opacity: .35; }
+  #search { background: #1d1813; border: 1px solid #3a322a; color: #e8e0d0; border-radius: 4px;
+            font-family: "IBM Plex Mono", monospace; font-size: .8rem; padding: .3rem .6rem; width: 220px; }
+  #search:focus { outline: 2px solid #b58cd9; outline-offset: 1px; }
+  .stage { position: relative; border: 1px solid #2e2720; border-radius: 8px;
+           background: radial-gradient(ellipse at 50% 40%, #1a1510 0%, #120e0b 75%); overflow: hidden; }
+  canvas { display: block; width: 100%; height: 660px; cursor: grab; }
+  #panel { position: absolute; top: 12px; right: 12px; width: 300px; max-height: calc(100% - 24px);
+           overflow-y: auto; background: rgba(24, 19, 14, .96); border: 1px solid #4a3f33;
+           border-radius: 6px; padding: .9rem 1rem; display: none; }
+  #panel h2 { font-size: 1.2rem; margin: 0 0 .1rem; }
+  #panel .kind { font-family: "IBM Plex Mono", monospace; font-size: .7rem; letter-spacing: .1em;
+                 text-transform: uppercase; margin-bottom: .6rem; }
+  #panel dl { margin: 0 0 .7rem; font-size: .85rem; }
+  #panel dt { color: #8c7f6c; font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+              text-transform: uppercase; letter-spacing: .08em; margin-top: .45rem; }
+  #panel dd { margin: 0; }
+  #panel .rel { font-size: .83rem; padding: .18rem 0; border-top: 1px solid #2e2720; }
+  #panel .rel b { cursor: pointer; }
+  #panel .rel b:hover { text-decoration: underline; }
+  #panel .rname { font-family: "IBM Plex Mono", monospace; font-size: .68rem; color: #8c7f6c; }
+  #panel .close { position: absolute; top: 6px; right: 10px; background: none; border: none;
+                  color: #8c7f6c; font-size: 1.1rem; cursor: pointer; }
+  .hint { color: #8c7f6c; font-size: .8rem; font-family: "IBM Plex Mono", monospace; margin-top: .55rem; }
+  @media (max-width: 640px) { .card { flex-direction: column; } .card .thumb { width: 100%; height: 200px; } }
+</style>
+
+<header>
+  <h1>The Ashen Era, Mapped</h1>
+  <p class="sub">The organizer's companion to the competition corpus: the world, its powers and people, the layer built to be hard, and the knowledge graph everything is rendered from.</p>
+  <p class="statline">__STATS__</p>
+</header>
+
+<div class="wrap">
+  <nav role="tablist" aria-label="Sections">
+    <button class="tabbtn" role="tab" data-tab="world" aria-selected="true">the world</button>
+    <button class="tabbtn" role="tab" data-tab="factions" aria-selected="false">factions</button>
+    <button class="tabbtn" role="tab" data-tab="conflicts" aria-selected="false">conflicts</button>
+    <button class="tabbtn" role="tab" data-tab="characters" aria-selected="false">characters</button>
+    <button class="tabbtn" role="tab" data-tab="relics" aria-selected="false">relics &amp; beasts</button>
+    <button class="tabbtn" role="tab" data-tab="hidden" aria-selected="false">hidden layer</button>
+    <button class="tabbtn" role="tab" data-tab="validation" aria-selected="false">validation</button>
+    <button class="tabbtn" role="tab" data-tab="atlas" aria-selected="false">atlas</button>
+  </nav>
+
+  <section class="tabsec active" id="tab-world">__SEC_WORLD__</section>
+  <section class="tabsec" id="tab-factions">__SEC_FACTIONS__</section>
+  <section class="tabsec" id="tab-conflicts">__SEC_CONFLICTS__</section>
+  <section class="tabsec" id="tab-characters">__SEC_CHARACTERS__</section>
+  <section class="tabsec" id="tab-relics">__SEC_RELICS__</section>
+  <section class="tabsec" id="tab-hidden">__SEC_HIDDEN__</section>
+  <section class="tabsec" id="tab-validation">__SEC_VALIDATION__</section>
+
+  <section class="tabsec" id="tab-atlas">
+    <h2>The atlas</h2>
+    <p class="lede">Every node is an entity, every line is a fact expressed somewhere in the corpus. The five factions sit at the center of the web by design.</p>
+    <div class="controls">
+      <div class="legend" id="legend"></div>
+      <input id="search" type="search" placeholder="find an entity..." aria-label="Find an entity">
+    </div>
+    <div class="stage">
+      <canvas id="c" tabindex="0" aria-label="Interactive knowledge graph"></canvas>
+      <div id="panel"></div>
+    </div>
+    <p class="hint">drag to pan &middot; wheel to zoom &middot; hover to trace connections &middot; click a node for its fact sheet</p>
+  </section>
+</div>
+
+<script id="graphdata" type="application/json">__DATA__</script>
+<script>
+(function () {
+  // ---- tabs
+  var btns = document.querySelectorAll('.tabbtn');
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      btns.forEach(function (x) { x.setAttribute('aria-selected', 'false'); });
+      document.querySelectorAll('.tabsec').forEach(function (s) { s.classList.remove('active'); });
+      b.setAttribute('aria-selected', 'true');
+      document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+      if (b.dataset.tab === 'atlas' && window.__atlasShow) window.__atlasShow();
+      window.scrollTo({ top: 0 });
+    });
+  });
+
+  // ---- atlas
+  var DATA = JSON.parse(document.getElementById('graphdata').textContent);
+  var COLORS = { faction: '#d4a94e', character: '#d97f6e', location: '#7fb8a0',
+                 artifact: '#b58cd9', conflict: '#e0813f', creature: '#9aa85c' };
+  var KINDS = ['faction', 'character', 'location', 'artifact', 'conflict', 'creature'];
+  var nodes = DATA.nodes, links = DATA.links;
+  var byId = {};
+  nodes.forEach(function (n, i) { n.i = i; byId[n.id] = n; });
+  links.forEach(function (l) { l.a = byId[l.s]; l.b = byId[l.t]; });
+  nodes.forEach(function (n) { n.deg = 0; n.rels = []; });
+  links.forEach(function (l) {
+    if (!l.a || !l.b) return;
+    l.a.deg++; l.b.deg++;
+    l.a.rels.push({ dir: 'out', rel: l.r, other: l.b });
+    l.b.rels.push({ dir: 'in', rel: l.r, other: l.a });
+  });
+  var RING = { faction: 30, conflict: 110, location: 240, character: 380, artifact: 320, creature: 340 };
+  nodes.forEach(function (n, i) {
+    var ang = (i * 2.399963) % (Math.PI * 2);
+    var r = RING[n.kind] + (Math.sin(i * 7.3) * 40);
+    n.x = Math.cos(ang) * r; n.y = Math.sin(ang) * r; n.vx = 0; n.vy = 0;
+    n.r = 4 + Math.min(11, Math.sqrt(n.deg) * 1.9);
+  });
+
+  function step(alpha) {
+    var i, j, n, m, dx, dy, d2, d, f;
+    for (i = 0; i < nodes.length; i++) {
+      n = nodes[i];
+      for (j = i + 1; j < nodes.length; j++) {
+        m = nodes[j];
+        dx = n.x - m.x; dy = n.y - m.y; d2 = dx * dx + dy * dy + 1;
+        if (d2 < 90000) {
+          f = 1600 * alpha / d2; d = Math.sqrt(d2);
+          dx = dx / d * f; dy = dy / d * f;
+          n.vx += dx; n.vy += dy; m.vx -= dx; m.vy -= dy;
+        }
+      }
+      n.vx -= n.x * 0.004 * alpha; n.vy -= n.y * 0.004 * alpha;
+    }
+    links.forEach(function (l) {
+      if (!l.a || !l.b) return;
+      var dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+      var d = Math.sqrt(dx * dx + dy * dy) + 0.01;
+      var rest = 70 + (l.a.r + l.b.r) * 2;
+      var f = (d - rest) / d * 0.05 * alpha;
+      dx *= f; dy *= f;
+      l.a.vx += dx; l.a.vy += dy; l.b.vx -= dx; l.b.vy -= dy;
+    });
+    nodes.forEach(function (n) {
+      if (n === dragNode) return;
+      n.x += n.vx; n.y += n.vy; n.vx *= 0.6; n.vy *= 0.6;
+    });
+  }
+
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var cam = { x: 0, y: 0, z: 0.9 };
+  var hover = null, selected = null, dragNode = null;
+  var visible = {}; KINDS.forEach(function (k) { visible[k] = true; });
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    if (w && h) { canvas.width = w * dpr; canvas.height = h * dpr; }
+  }
+  window.addEventListener('resize', function () { resize(); draw(); });
+  window.__atlasShow = function () { resize(); draw(); };
+  resize();
+
+  function toScreen(n) {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    return { x: (n.x - cam.x) * cam.z + w / 2, y: (n.y - cam.y) * cam.z + h / 2 };
+  }
+  function toWorld(px, py) {
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    return { x: (px - w / 2) / cam.z + cam.x, y: (py - h / 2) / cam.z + cam.y };
+  }
+  function nodeVisible(n) { return visible[n.kind]; }
+  function isNeighbor(a, b) {
+    if (a === b) return true;
+    return a.rels.some(function (r) { return r.other === b; });
+  }
+  function labelWanted(n) {
+    if (n === hover || n === selected) return true;
+    if (hover && isNeighbor(hover, n)) return true;
+    if (n.kind === 'faction' || n.kind === 'conflict') return true;
+    if (n.kind === 'character' && n.p.tier === 'major' && cam.z > 0.55) return true;
+    if (n.kind === 'location' && n.p.is_core && cam.z > 0.75) return true;
+    return cam.z > 1.5;
+  }
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    var focus = hover || selected;
+    links.forEach(function (l) {
+      if (!l.a || !l.b || !nodeVisible(l.a) || !nodeVisible(l.b)) return;
+      var pa = toScreen(l.a), pb = toScreen(l.b);
+      var lit = focus && (l.a === focus || l.b === focus);
+      ctx.strokeStyle = lit ? 'rgba(232,224,208,0.55)' : 'rgba(160,140,110,0.13)';
+      ctx.lineWidth = lit ? 1.4 : 0.7;
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      if (lit && cam.z > 0.5) {
+        ctx.fillStyle = 'rgba(200,185,160,0.85)';
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.fillText(l.r.toLowerCase().replace(/_/g, ' '), (pa.x + pb.x) / 2 + 4, (pa.y + pb.y) / 2 - 3);
+      }
+    });
+    nodes.forEach(function (n) {
+      if (!nodeVisible(n)) return;
+      var p = toScreen(n);
+      var dim = focus && n !== focus && !isNeighbor(focus, n);
+      ctx.globalAlpha = dim ? 0.22 : 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, n.r * cam.z, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[n.kind]; ctx.fill();
+      if (n === selected) {
+        ctx.strokeStyle = '#f0e8d6'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, n.r * cam.z + 3, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (labelWanted(n) && !dim) {
+        ctx.font = (n.kind === 'faction' ? '600 12px' : '11px') + ' "Source Sans 3", sans-serif';
+        ctx.fillStyle = 'rgba(240,232,214,0.92)';
+        ctx.strokeStyle = 'rgba(18,14,11,0.85)'; ctx.lineWidth = 3;
+        var lx = p.x + n.r * cam.z + 5, ly = p.y + 4;
+        ctx.strokeText(n.name, lx, ly); ctx.fillText(n.name, lx, ly);
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var iter = 0, TOTAL = 380;
+  function tick() {
+    var batch = reduced ? TOTAL : 6;
+    for (var k = 0; k < batch && iter < TOTAL; k++, iter++) step(1 - iter / TOTAL * 0.7);
+    draw();
+    if (iter < TOTAL) requestAnimationFrame(tick);
+  }
+  tick();
+
+  function pick(px, py) {
+    var best = null, bd = 1e9;
+    nodes.forEach(function (n) {
+      if (!nodeVisible(n)) return;
+      var p = toScreen(n);
+      var d = Math.hypot(p.x - px, p.y - py);
+      if (d < Math.max(10, n.r * cam.z + 4) && d < bd) { bd = d; best = n; }
+    });
+    return best;
+  }
+  var panning = false, lastX = 0, lastY = 0, moved = 0;
+  canvas.addEventListener('mousedown', function (e) {
+    var r = canvas.getBoundingClientRect();
+    var n = pick(e.clientX - r.left, e.clientY - r.top);
+    moved = 0;
+    if (n) { dragNode = n; } else { panning = true; }
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', function (e) {
+    var r = canvas.getBoundingClientRect();
+    var dx = e.clientX - lastX, dy = e.clientY - lastY;
+    if (dragNode) {
+      dragNode.x += dx / cam.z; dragNode.y += dy / cam.z;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      draw(); return;
+    }
+    if (panning) {
+      cam.x -= dx / cam.z; cam.y -= dy / cam.z;
+      lastX = e.clientX; lastY = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+      draw(); return;
+    }
+    var h = pick(e.clientX - r.left, e.clientY - r.top);
+    if (h !== hover) { hover = h; canvas.style.cursor = h ? 'pointer' : 'grab'; draw(); }
+  });
+  window.addEventListener('mouseup', function () {
+    if (dragNode && moved < 5) select(dragNode);
+    else if (panning && moved < 5) select(null);
+    dragNode = null; panning = false; draw();
+  });
+  canvas.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var r = canvas.getBoundingClientRect();
+    var before = toWorld(e.clientX - r.left, e.clientY - r.top);
+    cam.z *= (e.deltaY < 0 ? 1.12 : 0.89);
+    cam.z = Math.max(0.25, Math.min(4, cam.z));
+    var after = toWorld(e.clientX - r.left, e.clientY - r.top);
+    cam.x += before.x - after.x; cam.y += before.y - after.y;
+    draw();
+  }, { passive: false });
+
+  var panel = document.getElementById('panel');
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function select(n) {
+    selected = n;
+    if (!n) { panel.style.display = 'none'; return; }
+    var html = '<button class="close" aria-label="Close">&times;</button>';
+    html += '<h2>' + esc(n.name) + '</h2>';
+    html += '<div class="kind" style="color:' + COLORS[n.kind] + '">' + n.kind + '</div><dl>';
+    Object.keys(n.p).forEach(function (k) {
+      if (k === 'is_core' || k === 'tier') return;
+      var v = n.p[k];
+      if (['born', 'died', 'founded', 'forged', 'began', 'ended'].indexOf(k) >= 0) v += ' AS';
+      html += '<dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(v) + '</dd>';
+    });
+    html += '</dl><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:#8c7f6c;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem">' + n.rels.length + ' relations</div>';
+    n.rels.slice(0, 40).forEach(function (r) {
+      var line = r.dir === 'out'
+        ? '<span class="rname">' + esc(r.rel.toLowerCase().replace(/_/g, ' ')) + '</span> <b data-id="' + esc(r.other.id) + '">' + esc(r.other.name) + '</b>'
+        : '<b data-id="' + esc(r.other.id) + '">' + esc(r.other.name) + '</b> <span class="rname">' + esc(r.rel.toLowerCase().replace(/_/g, ' ')) + '</span> <span class="rname">&rarr; this</span>';
+      html += '<div class="rel">' + line + '</div>';
+    });
+    panel.innerHTML = html;
+    panel.style.display = 'block';
+    panel.querySelector('.close').onclick = function () { select(null); draw(); };
+    panel.querySelectorAll('b[data-id]').forEach(function (b) {
+      b.onclick = function () {
+        var t = byId[b.getAttribute('data-id')];
+        if (t) { cam.x = t.x; cam.y = t.y; select(t); draw(); }
+      };
+    });
+  }
+
+  var counts = {};
+  nodes.forEach(function (n) { counts[n.kind] = (counts[n.kind] || 0) + 1; });
+  var legend = document.getElementById('legend');
+  KINDS.forEach(function (k) {
+    var c = document.createElement('button');
+    c.className = 'chip'; c.setAttribute('aria-pressed', 'true');
+    c.innerHTML = '<span class="dot" style="background:' + COLORS[k] + '"></span>' + k + ' &middot; ' + counts[k];
+    c.onclick = function () {
+      visible[k] = !visible[k];
+      c.classList.toggle('off', !visible[k]);
+      c.setAttribute('aria-pressed', String(visible[k]));
+      draw();
+    };
+    legend.appendChild(c);
+  });
+
+  document.getElementById('search').addEventListener('input', function (e) {
+    var q = e.target.value.trim().toLowerCase();
+    if (q.length < 2) return;
+    var n = nodes.find(function (n) { return n.name.toLowerCase().indexOf(q) >= 0 && nodeVisible(n); });
+    if (n) { cam.x = n.x; cam.y = n.y; cam.z = Math.max(cam.z, 1.2); select(n); draw(); }
+  });
+})();
+</script>
