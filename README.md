@@ -23,7 +23,7 @@ Synthlore resolves these edge cases at the planning layer before prose compilati
 | Evaluation Track | Target Capability | Enforced Invariant |
 | :--- | :--- | :--- |
 | **Track 1A: Multimodal** | Reading charts and visual traits | Quantitative facts (`visual_only`) are excluded from all text prompts and plotted via `matplotlib` (`fact_visuals.py`). Generative images (`gpt-image-2`) carry visual attributes verified by a Vision LLM `YES/NO` gate (`atmo_visuals.py`). |
-| **Track 1B: Multi-Hop** | Chaining facts across documents | For every protected 2-hop chain $(A \xrightarrow{e_1} B \xrightarrow{e_2} C)$, the planner enforces $\text{docs}(e_1) \cap \text{docs}(e_2) = \emptyset$. Post-compilation leak checks (`leakcheck.py`) confirm $C$ never appears in $e_1$'s documents. |
+| **Track 1B: Multi-Hop** | Chaining facts across documents | For every protected 2-hop chain (A → e₁ → B → e₂ → C), the planner enforces `docs(e₁) ∩ docs(e₂) = ∅`. Post-compilation leak checks (`leakcheck.py`) confirm C never appears in e₁'s documents. |
 | **Track 1C: Agentic** | Resolving source conflicts | Ground truth is placed only in **Tier-1 Canon** (Codex / Annals), false claims are planted in **Tier-3 Ephemera** (letters / rumors), and **Tier-2 Wiki** pages note the dispute without stating a value. |
 
 ---
@@ -298,7 +298,7 @@ PYTHONPATH=. python scripts/validate_corpus.py --run_dir output/competition_<tim
 While Synthlore uses a dark fantasy setting to guarantee zero pre-training contamination, the core methodology (Causal Graph to Constraint-Driven Fact Planner to Multi-Format Compilation to Closed-Loop Verification) is domain-agnostic. Future development focuses on four areas:
 
 1. **Declarative Domain Schemas:** Abstracting `WorldBuilder` so that users can define custom schemas via YAML or JSON. This will allow synthesizing realistic evaluation datasets for corporate mergers, clinical patient histories, supply-chain logistics, and IT postmortems.
-2. **Arbitrary $k$-Hop and DAG Reasoning Topologies:** Generalizing the non-cohabitation constraint to arbitrary dependency graphs and temporal paths, ensuring that questions requiring $k$ steps cannot be answered with fewer than $k$ retrievals.
+2. **Arbitrary k-Hop and DAG Reasoning Topologies:** Generalizing the non-cohabitation constraint to arbitrary dependency graphs and temporal paths, ensuring that questions requiring k steps cannot be answered with fewer than k retrievals.
 3. **Open-Weights and Local Inference Backends:** Broadening `UnifiedAIClient` to support local inference backends such as `vLLM` and `Ollama` alongside cloud API providers.
 4. **Built-In RAG Evaluation Harness:** Adding an automated scoring runner that ingests predictions from external RAG pipelines and reports retrieval recall, hop coverage, and authority resolution metrics directly against ground truth.
 
