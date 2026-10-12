@@ -1,20 +1,20 @@
-# SyntheticLore-Bench
+# Synthlore
 
 **A Graph-First, Constraint-Verified Synthetic Corpus and Benchmark Generator for Multimodal, Multi-Hop, and Agentic RAG Evaluation.**
 
-SyntheticLore-Bench generates internally consistent fictional universes (415+ documents, ~511,000 words, ~1,277 pages across novel volumes, encyclopedia wikis, archival codexes, and in-world ephemera) paired with a mathematically verified ground-truth Q&A benchmark.
+Synthlore generates internally consistent fictional universes (415+ documents, ~511,000 words, ~1,277 pages across novel volumes, encyclopedia wikis, archival codexes, and in-world ephemera) paired with a mathematically verified ground-truth Q&A benchmark.
 
 ---
 
-## Core Problem and Solution
+## Overcoming Edge Cases in Synthetic RAG Generation
 
-Synthetic RAG benchmarks typically fail in three ways:
+When generating complex synthetic corpora for RAG evaluation, naive generation approaches run into three difficult situations:
 
-1. **Ego-Graph Multi-Hop Collapse:** Standard graph-to-text pipelines dump a focal entity's $k$-hop neighborhood into one document. Retrieving the bridge entity's page answers a 2-hop query in a single lookup.
-2. **Diffusion Digit Hallucination:** Image generation models garble numbers on charts, making quantitative visual-RAG questions unreliable.
-3. **Unweighted Contradictions:** Placing conflicting claims in documents of equal standing forces RAG agents to guess rather than evaluate source authority.
+1. **The Bridge-Node Shortcut:** Grouping facts by entity neighborhood places both hops of a multi-hop reasoning chain onto the bridge entity's page, allowing single-document lookups to solve 2-hop questions.
+2. **Diffusion Digit Corruption:** Using image generation models to render quantitative charts leads to altered or missing numbers, introducing noise into multimodal evaluation.
+3. **Unweighted Contradictions:** Scattering conflicting claims across documents without explicit authority indicators forces RAG systems to guess rather than reason over source credibility.
 
-SyntheticLore-Bench prevents all three failure modes at the planning layer before prose generation begins, and verifies the compiled output before packaging:
+Synthlore resolves these edge cases at the planning layer before prose compilation begins, and audits the final output through a closed-loop verification gate:
 
 | Evaluation Track | Target Capability | Enforced Invariant |
 | :--- | :--- | :--- |
@@ -24,31 +24,48 @@ SyntheticLore-Bench prevents all three failure modes at the planning layer befor
 
 ---
 
-## Interactive Architecture Diagrams
+## The Four-Layer Architecture
 
-### 1. End-to-End 7-Stage Pipeline
+Synthlore organizes synthetic data generation into four clear layers, separating universe modeling from document compilation and verification:
 
 ```mermaid
-flowchart LR
-    subgraph S1["Stage 1: Plan (Offline)"]
-        WB["WorldBuilder\nsrc/world/builder.py"] --> CP["CorpusPlanner\nsrc/planning/corpus_planner.py"]
+flowchart TD
+    subgraph L1["Layer 1: Causal Universe Engine"]
+        WB["WorldBuilder\nsrc/world/builder.py"]
     end
 
-    subgraph S2["Stages 2 to 5: Compile & Render"]
-        CP --> LB["Lore Bible\nlore_bible.py"]
-        LB --> CC["Fact-List Compilers\ncompilers.py"]
-        CP --> FV["Matplotlib Plates\nfact_visuals.py"]
-        CP --> AV["Generative Art + VLM Gate\natmo_visuals.py"]
-        CC --> RV2["Multi-Page Renderer\nrenderer_v2.py"]
+    subgraph L2["Layer 2: Constraint-Driven Fact Planner"]
+        CP["CorpusPlanner\nsrc/planning/corpus_planner.py"]
     end
 
-    subgraph S3["Stages 6 to 7: Package & Gate"]
-        RV2 --> PKG["public/ vs answer_key/"]
-        FV --> PKG
-        AV --> PKG
-        PKG --> BB["Benchmark + LeakCheck\nsrc/evaluation/"]
-        BB --> VAL["Go/No-Go Gate\nvalidate_corpus.py"]
+    subgraph L3["Layer 3: Multi-Format Synthesis & Rendering"]
+        LB["Lore Bible\nlore_bible.py"]
+        CC["Fact-List Compilers\ncompilers.py"]
+        FV["Matplotlib Plates\nfact_visuals.py"]
+        AV["Generative Art + VLM Gate\natmo_visuals.py"]
+        RV2["Multi-Page Renderer\nrenderer_v2.py"]
     end
+
+    subgraph L4["Layer 4: Closed-Loop Verification & Benchmarking"]
+        PKG["Strict Packaging Split\npublic/ vs answer_key/"]
+        BB["BenchmarkBuilder\nsrc/evaluation/benchmark.py"]
+        LC["LeakCheck Detector\nsrc/evaluation/leakcheck.py"]
+        VAL["Go/No-Go Gate\nscripts/validate_corpus.py"]
+    end
+
+    WB --> CP
+    CP --> LB
+    CP --> FV
+    CP --> AV
+    LB --> CC
+    CC --> RV2
+    FV --> PKG
+    AV --> PKG
+    RV2 --> PKG
+    PKG --> BB
+    PKG --> LC
+    BB --> VAL
+    LC --> VAL
 
     click WB "https://github.com/NavinYP/synthlore/blob/main/src/world/builder.py" "Open WorldBuilder"
     click CP "https://github.com/NavinYP/synthlore/blob/main/src/planning/corpus_planner.py" "Open CorpusPlanner"
@@ -58,19 +75,20 @@ flowchart LR
     click AV "https://github.com/NavinYP/synthlore/blob/main/src/generation/atmo_visuals.py" "Open AtmoVisuals"
     click RV2 "https://github.com/NavinYP/synthlore/blob/main/src/generation/renderer_v2.py" "Open Renderer v2"
     click BB "https://github.com/NavinYP/synthlore/blob/main/src/evaluation/benchmark.py" "Open BenchmarkBuilder"
+    click LC "https://github.com/NavinYP/synthlore/blob/main/src/evaluation/leakcheck.py" "Open LeakCheck"
     click VAL "https://github.com/NavinYP/synthlore/blob/main/scripts/validate_corpus.py" "Open Validator"
 ```
 
-### 2. Fact-Placement and Verification Sequence
+### Fact-Placement and Verification Sequence
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant W as WorldBuilder
-    participant P as CorpusPlanner
-    participant C as CorpusCompiler
-    participant V as VLM / LeakCheck
-    participant B as BenchmarkBuilder
+    participant W as WorldBuilder (Layer 1)
+    participant P as CorpusPlanner (Layer 2)
+    participant C as Compilers & Renderers (Layer 3)
+    participant V as VLM & LeakCheck (Layer 4)
+    participant B as BenchmarkBuilder (Layer 4)
 
     W->>P: Directed Multigraph (571 facts, 8 disputes)
     Note over P: Enforce Track 1A/1B/1C constraints:<br/>1. Hold back 15 visual_only facts<br/>2. Split 24 two-hop chains across docs<br/>3. Route disputes to Tier 1 vs Tier 3
@@ -78,7 +96,7 @@ sequenceDiagram
     C->>C: Compile prose + run missing-fact repair pass
     C->>V: Compiled drafts + generated images
     V->>B: Verified prose + VLM-confirmed visual traits
-    Note over B: Reject any question where<br/>answers leaked into unintended docs
+    Note over B: Reject candidate questions where<br/>answers leaked into unintended docs
     B-->>W: public/ corpus + answer_key/ benchmarks
 ```
 
@@ -189,33 +207,33 @@ VERDICT: GO - corpus is benchmark-valid
 ```text
 synthlore/
 ├── src/
-│   ├── world/                  # Deterministic world graph & naming engine
+│   ├── world/                  # Layer 1: Deterministic world graph & naming engine
 │   │   ├── builder.py          # WorldBuilder (entities, timelines, temporal sanity, disputes)
 │   │   └── naming.py           # Naming banks and slug utilities
-│   ├── planning/               # Constraint-satisfaction fact placement
+│   ├── planning/               # Layer 2: Constraint-driven fact placement
 │   │   └── corpus_planner.py   # CorpusPlanner (1A/1B/1C placement & invariant validation)
-│   ├── generation/             # LLM compilation, visual plates, and multi-page rendering
+│   ├── generation/             # Layer 3: LLM compilation, visual plates, and rendering
 │   │   ├── llm_client.py       # Async Azure AI Foundry client with preflight & vision gate
 │   │   ├── lore_bible.py       # Canonical entity voice dossier generator
 │   │   ├── compilers.py        # Chronicle, Wiki, Codex, and Ephemera compilers + repair loop
 │   │   ├── fact_visuals.py     # Programmatic matplotlib chart/plate renderer (Track 1A)
 │   │   ├── atmo_visuals.py     # Generative art (gpt-image-2) + VLM verification
 │   │   ├── renderer_v2.py      # Paginating PDF, simulated-scan PDF, and DOCX renderer
-│   │   ├── document_compiler.py# Legacy Phase 2-6 ego-graph compiler
-│   │   └── visual_renderer.py  # Legacy Phase 3 single-canvas renderer
-│   ├── evaluation/             # Benchmark synthesis & post-generation leak detection
+│   │   ├── document_compiler.py# Prototype ego-graph compiler (kept for reference)
+│   │   └── visual_renderer.py  # Prototype single-canvas renderer (kept for reference)
+│   ├── evaluation/             # Layer 4: Benchmark synthesis & leak detection
 │   │   ├── benchmark.py        # Verified Track 1A/1B/1C benchmark builder
 │   │   ├── leakcheck.py        # Lexical and numeric fact-leakage detector
-│   │   └── qa_generator.py     # Legacy Phase 4 Q&A generator
-│   ├── graph/                  # Legacy Phase 1-6 theme-agnostic graph engine
+│   │   └── qa_generator.py     # Prototype Q&A generator
+│   ├── graph/                  # Prototype graph engine (kept for reference)
 │   └── settings.py             # Pydantic environment configuration
 ├── scripts/
-│   ├── generate_competition_corpus.py  # 7-stage resumable corpus pipeline orchestrator
+│   ├── generate_competition_corpus.py  # Main pipeline orchestrator (resumable)
 │   ├── validate_corpus.py              # Go/No-Go corpus verification gate (Checks A1-V1)
 │   ├── build_world_companion.py        # Self-contained HTML World Companion builder
 │   ├── visualize_graph.py              # Knowledge graph topology visualizer
 │   ├── smoke_test.py                   # Endpoint connectivity check
-│   └── legacy/                         # Archived Phase 2-6 ego-graph scripts
+│   └── legacy/                         # Archived early prototype scripts
 ├── share/                      # Pre-built HTML showcases from the Ashen Era run
 │   ├── world_companion/        # Organizer World Companion (dossiers, gallery, hidden layer)
 │   ├── ashen_era_world_map.html# Interactive knowledge-graph atlas
@@ -241,7 +259,7 @@ pip install -r requirements.txt
 
 ### 2. Configure Credentials (`.env`)
 
-Copy `.env.example` to `.env` and populate your Azure AI Foundry / Azure OpenAI endpoints. The `plan` and `figures` stages as well as the entire `pytest` suite run offline without API keys.
+Copy `.env.example` to `.env` and populate your Azure AI Foundry / Azure OpenAI endpoints. The planning and programmatic figure generation stages as well as the entire `pytest` suite run offline without API keys.
 
 ```bash
 cp .env.example .env
@@ -271,12 +289,12 @@ PYTHONPATH=. python scripts/validate_corpus.py --run_dir output/competition_<tim
 
 ## What's Next: Generalizing Constraint-Verified Synthesis
 
-While SyntheticLore-Bench uses a dark fantasy setting to guarantee zero pre-training contamination, the underlying **Graph -> Fact-Placement Matrix -> Verified Compilation** pattern is domain-agnostic. Future work focuses on four areas:
+While Synthlore uses a dark fantasy setting to guarantee zero pre-training contamination, the core methodology (Causal Graph to Constraint-Driven Fact Planner to Multi-Format Compilation to Closed-Loop Verification) is domain-agnostic. Future development focuses on four areas:
 
-1. **Declarative Domain Ontologies:** Replacing the hardcoded entity schemas in `src/world/builder.py` with pluggable YAML/JSON ontology definitions so the same constraint planner can synthesize benchmarks for enterprise legal discovery, clinical EHR timelines, financial audit trails, and incident postmortems.
-2. **Arbitrary $k$-Hop and DAG Reasoning Topologies:** Generalizing the 2-hop non-cohabitation solver in `CorpusPlanner` to enforce minimal document-cut constraints over $k$-hop chains, diamond dependency graphs, and temporal aggregation queries.
-3. **Open-Weights and Local Model Providers:** Abstracting `UnifiedAIClient` to support `vLLM`, `Ollama`, Anthropic, and Gemini endpoints alongside Azure AI Foundry for local benchmark generation.
-4. **Built-In RAG Evaluation Harness:** Adding an automated scoring runner that ingests a target RAG system's predictions and computes hop-level retrieval recall, visual extraction accuracy, and authority-tier resolution scores directly against `answer_key/`.
+1. **Declarative Domain Schemas:** Abstracting `WorldBuilder` so that users can define custom schemas via YAML or JSON. This will allow synthesizing realistic evaluation datasets for corporate mergers, clinical patient histories, supply-chain logistics, and IT postmortems.
+2. **Arbitrary $k$-Hop and DAG Reasoning Topologies:** Generalizing the non-cohabitation constraint to arbitrary dependency graphs and temporal paths, ensuring that questions requiring $k$ steps cannot be answered with fewer than $k$ retrievals.
+3. **Open-Weights and Local Inference Backends:** Broadening `UnifiedAIClient` to support local inference backends such as `vLLM` and `Ollama` alongside cloud API providers.
+4. **Built-In RAG Evaluation Harness:** Adding an automated scoring runner that ingests predictions from external RAG pipelines and reports retrieval recall, hop coverage, and authority resolution metrics directly against ground truth.
 
 ---
 
