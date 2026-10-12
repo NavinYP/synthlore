@@ -1,5 +1,7 @@
 # Synthlore
 
+![Synthlore Banner](assets/diagrams/header.jpg)
+
 **A Graph-First, Constraint-Verified Synthetic Corpus and Benchmark Generator for Multimodal, Multi-Hop, and Agentic RAG Evaluation.**
 
 Synthlore generates internally consistent fictional universes (415+ documents, ~511,000 words, ~1,277 pages across novel volumes, encyclopedia wikis, archival codexes, and in-world ephemera) paired with a mathematically verified ground-truth Q&A benchmark.
@@ -14,6 +16,8 @@ When generating complex synthetic corpora for RAG evaluation, naive generation a
 2. **Diffusion Digit Corruption:** Using image generation models to render quantitative charts leads to altered or missing numbers, introducing noise into multimodal evaluation.
 3. **Unweighted Contradictions:** Scattering conflicting claims across documents without explicit authority indicators forces RAG systems to guess rather than reason over source credibility.
 
+![Comparison: Naive Ego-Graph Dump vs Synthlore Constraint Planning](assets/diagrams/core_mechanism.jpg)
+
 Synthlore resolves these edge cases at the planning layer before prose compilation begins, and audits the final output through a closed-loop verification gate:
 
 | Evaluation Track | Target Capability | Enforced Invariant |
@@ -27,6 +31,8 @@ Synthlore resolves these edge cases at the planning layer before prose compilati
 ## The Four-Layer Architecture
 
 Synthlore organizes synthetic data generation into four clear layers, separating universe modeling from document compilation and verification:
+
+![Synthlore Four-Layer Architecture Infographic](assets/diagrams/architecture.jpg)
 
 ```mermaid
 flowchart TD
