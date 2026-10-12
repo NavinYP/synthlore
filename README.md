@@ -87,6 +87,8 @@ flowchart TD
 
 ### Fact-Placement and Verification Sequence
 
+![Synthlore Fact-Placement and Verification Sequence](assets/diagrams/pipeline_sequence.png)
+
 ```mermaid
 sequenceDiagram
     autonumber
